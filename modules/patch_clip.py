@@ -122,7 +122,19 @@ def patched_SDClipModel_forward(self, tokens):
                 if tokens[x, y] == max_token:
                     break
 
-    outputs = self.transformer(input_ids=tokens, attention_mask=attention_mask,
+    # Ensure position embeddings and position_ids match the device in lowvram mode
+    if hasattr(self.transformer, "text_model") and hasattr(self.transformer.text_model, "embeddings"):
+        emb = self.transformer.text_model.embeddings
+        if hasattr(emb, "position_ids") and emb.position_ids is not None:
+            if emb.position_ids.device != device:
+                emb.position_ids = emb.position_ids.to(device)
+        if hasattr(emb, "position_embedding") and hasattr(emb.position_embedding, "weight"):
+            if emb.position_embedding.weight.device != device:
+                emb.position_embedding = emb.position_embedding.to(device)
+
+    position_ids = torch.arange(tokens.shape[-1], device=device).unsqueeze(0).expand(tokens.shape[0], -1)
+
+    outputs = self.transformer(input_ids=tokens, attention_mask=attention_mask, position_ids=position_ids,
                                output_hidden_states=self.layer == "hidden")
     self.transformer.set_input_embeddings(backup_embeds)
 

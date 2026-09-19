@@ -15,6 +15,7 @@ from .util import (
 from ..attention import SpatialTransformer, SpatialVideoTransformer, default
 from ldm_patched.ldm.util import exists
 import ldm_patched.modules.ops
+from ldm_patched.modules import model_management as mm
 ops = ldm_patched.modules.ops.disable_weight_init
 
 class TimestepBlock(nn.Module):
@@ -843,6 +844,7 @@ class UNetModel(nn.Module):
 
         h = x
         for id, module in enumerate(self.input_blocks):
+            mm.check_pause_and_interrupt()
             transformer_options["block"] = ("input", id)
             h = forward_timestep_embed(module, h, emb, context, transformer_options, time_context=time_context, num_video_frames=num_video_frames, image_only_indicator=image_only_indicator)
             h = apply_control(h, control, 'input')
@@ -857,12 +859,14 @@ class UNetModel(nn.Module):
                 for p in patch:
                     h = p(h, transformer_options)
 
+        mm.check_pause_and_interrupt()
         transformer_options["block"] = ("middle", 0)
         h = forward_timestep_embed(self.middle_block, h, emb, context, transformer_options, time_context=time_context, num_video_frames=num_video_frames, image_only_indicator=image_only_indicator)
         h = apply_control(h, control, 'middle')
 
 
         for id, module in enumerate(self.output_blocks):
+            mm.check_pause_and_interrupt()
             transformer_options["block"] = ("output", id)
             hsp = hs.pop()
             hsp = apply_control(hsp, control, 'output')

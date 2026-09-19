@@ -425,13 +425,28 @@ def load_models_gpu(models, memory_required=0):
         if lowvram_available and (vram_set_state == VRAMState.LOW_VRAM or vram_set_state == VRAMState.NORMAL_VRAM):
             model_size = loaded_model.model_memory_required(torch_dev)
             current_free_mem = get_free_memory(torch_dev)
-            lowvram_model_memory = int(max(64 * (1024 * 1024), (current_free_mem - 1024 * (1024 * 1024)) / 1.3 ))
-            if model_size > (current_free_mem - inference_memory): #only switch to lowvram if really necessary
+            calc_lowvram_mem = int(max(64 * (1024 * 1024), (current_free_mem - 1024 * (1024 * 1024)) / 1.3 ))
+            if vram_set_state == VRAMState.LOW_VRAM:
+                # VRAM-Sparmodus: Aggressives VRAM-Sparen, Modell nutzt sparsamen VRAM-Puffer
+                lowvram_model_memory = calc_lowvram_mem
+            elif model_size > (current_free_mem - inference_memory):
+                # Normalmodus, aber Modell passt nicht in VRAM:
+                if not smart_ram_offload:
+                    raise RuntimeError(
+                        f"❌ [VRAM-Überlauf] Das Modell benötigt ca. {model_size / (1024**3):.2f} GB VRAM, "
+                        f"aber auf der GPU sind nur {current_free_mem / (1024**3):.2f} GB frei.\n"
+                        f"'Modell in RAM mitladen' ist AUSGESCHALTET – Auslagerung in den System-RAM ist verboten! "
+                        f"Generierung abgebrochen. Bitte aktiviere 'Modell in RAM mitladen' oder schalte den VRAM-Sparmodus ein."
+                    )
                 vram_set_state = VRAMState.LOW_VRAM
+                lowvram_model_memory = calc_lowvram_mem
             else:
+                # Normalmodus: Gesamtes Modell bleibt im VRAM für maximale Geschwindigkeit!
                 lowvram_model_memory = 0
 
         if vram_set_state == VRAMState.NO_VRAM:
+            if not smart_ram_offload:
+                raise RuntimeError("❌ [VRAM-Überlauf] Kein GPU-VRAM verfügbar und 'Modell in RAM mitladen' ist deaktiviert.")
             lowvram_model_memory = 64 * 1024 * 1024
 
         cur_loaded_model = loaded_model.model_load(lowvram_model_memory)
@@ -784,13 +799,75 @@ class InterruptProcessingException(Exception):
     pass
 
 interrupt_processing_mutex = threading.RLock()
-
 interrupt_processing = False
+
+smart_ram_offload = True
+
+is_paused = False
+is_paused_mutex = threading.RLock()
+
+def set_smart_ram_offload(value: bool):
+    global smart_ram_offload
+    smart_ram_offload = bool(value)
+
+def get_smart_ram_offload():
+    global smart_ram_offload
+    return smart_ram_offload
+
+def is_vram_sparmodus() -> bool:
+    global vram_state
+    return vram_state in (VRAMState.LOW_VRAM, VRAMState.NO_VRAM)
+
+def set_vram_sparmodus(enabled: bool):
+    global vram_state, set_vram_to, lowvram_available
+    if enabled:
+        vram_state = VRAMState.LOW_VRAM
+        set_vram_to = VRAMState.LOW_VRAM
+        lowvram_available = True
+        print("[Aether Studio] VRAM-Sparmodus AKTIVIERT (Eco / Low-VRAM).")
+    else:
+        vram_state = VRAMState.NORMAL_VRAM
+        set_vram_to = VRAMState.NORMAL_VRAM
+        print("[Aether Studio] Normalmodus AKTIVIERT (Max GPU Speed / Normal-VRAM).")
+
+    # Unload currently loaded models so next load applies the new strategy cleanly
+    for i in range(len(current_loaded_models) - 1, -1, -1):
+        m = current_loaded_models.pop(i)
+        m.model_unload()
+        del m
+    soft_empty_cache()
+
+def set_paused(value: bool):
+    global is_paused
+    with is_paused_mutex:
+        is_paused = bool(value)
+
+def toggle_paused():
+    global is_paused
+    with is_paused_mutex:
+        is_paused = not is_paused
+        return is_paused
+
+def get_paused():
+    global is_paused
+    with is_paused_mutex:
+        return is_paused
+
+def check_pause_and_interrupt():
+    import time
+    throw_exception_if_processing_interrupted()
+    while is_paused:
+        time.sleep(0.02)
+        throw_exception_if_processing_interrupted()
+    throw_exception_if_processing_interrupted()
+
 def interrupt_current_processing(value=True):
     global interrupt_processing
     global interrupt_processing_mutex
     with interrupt_processing_mutex:
         interrupt_processing = value
+    if value:
+        set_paused(False)
 
 def processing_interrupted():
     global interrupt_processing
@@ -804,4 +881,5 @@ def throw_exception_if_processing_interrupted():
     with interrupt_processing_mutex:
         if interrupt_processing:
             interrupt_processing = False
+            set_paused(False)
             raise InterruptProcessingException()

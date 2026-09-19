@@ -189,6 +189,10 @@ def get_dir_or_set_default(key, default_value, as_array=False, make_directory=Fa
 
 
 paths_checkpoints = get_dir_or_set_default('path_checkpoints', ['../models/checkpoints/'], True)
+path_all_models_sdxl_flux = os.path.abspath(os.path.join(os.path.dirname(__file__), '../models/all_models_sdxl_flux'))
+os.makedirs(path_all_models_sdxl_flux, exist_ok=True)
+if path_all_models_sdxl_flux not in paths_checkpoints:
+    paths_checkpoints.append(path_all_models_sdxl_flux)
 paths_loras = get_dir_or_set_default('path_loras', ['../models/loras/'], True)
 path_embeddings = get_dir_or_set_default('path_embeddings', '../models/embeddings/')
 path_vae_approx = get_dir_or_set_default('path_vae_approx', '../models/vae_approx/')

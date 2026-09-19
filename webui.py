@@ -23,6 +23,10 @@ from modules.private_logger import get_current_html_path
 from modules.ui_gradio_extensions import reload_javascript
 from modules.auth import auth_enabled, check_auth
 from modules.util import is_json
+import glob
+import modules.history_manager as history_manager
+import modules.prompt_guide as prompt_guide
+import modules.model_checker as model_checker
 
 def get_task(*args):
     args = list(args)
@@ -33,6 +37,7 @@ def get_task(*args):
 def generate_clicked(task: worker.AsyncTask):
     import ldm_patched.modules.model_management as model_management
 
+    model_management.set_paused(False)
     with model_management.interrupt_processing_mutex:
         model_management.interrupt_processing = False
     # outputs=[progress_html, progress_window, progress_gallery, gallery]
@@ -145,16 +150,70 @@ def inpaint_mode_change(mode, inpaint_engine_version):
 
 reload_javascript()
 
-title = f'Fooocus {fooocus_version.version}'
+import ldm_patched.modules.model_management as model_management
+
+def render_header_bar(is_eco: bool = True):
+    if is_eco:
+        vram_badge = '<span class="aether-hw-badge aether-badge-eco"><strong class="aether-hw-tag" style="color: #34d399;">🌱 VRAM-SPARMODUS:</strong> <span style="color:#a7f3d0; font-weight:700;">AKTIV</span> (Eco-VRAM)</span>'
+    else:
+        vram_badge = '<span class="aether-hw-badge aether-badge-speed"><strong class="aether-hw-tag" style="color: #38bdf8;">⚡ NORMALMODUS:</strong> <span style="color:#bae6fd; font-weight:700;">MAX SPEED</span> (Sparmodus AUS)</span>'
+
+    return f"""
+        <div class="aether-header-bar-inner">
+            <div class="aether-brand-title-group">
+                <span class="aether-symbol">◈</span>
+                <span class="aether-studio-title">AETHER <span class="aether-accent-text">STUDIO PRO</span></span>
+                <span class="aether-studio-version">v2.6 NEXT-GEN</span>
+                <span class="aether-divider-pipe">|</span>
+                <span class="aether-hw-badge"><strong class="aether-hw-tag">GPU</strong> RTX 3050 (6GB)</span>
+                <span class="aether-hw-badge"><strong class="aether-hw-tag">RAM</strong> 32 GB Hybrid</span>
+                {vram_badge}
+            </div>
+            <div class="aether-status-group">
+                <span class="aether-online-pulse"></span>
+                <span class="aether-status-badge-text">SYSTEM BEREIT</span>
+            </div>
+        </div>
+    """
+
+def render_vram_info(is_eco: bool = True):
+    if is_eco:
+        return """### 🟢 Status: 🌱 VRAM-Sparmodus ist AKTIV
+*Das System spart maximal Grafikspeicher, damit selbst große Modelle stabil laufen.*
+
+- **📊 VRAM-Verbrauch:** Stark reduziert (~2 bis 3 GB VRAM).
+- **⚙️ Funktionsweise:** Gewichte des Modells werden in kleineren Teilmengen auf der GPU berechnet und bei Bedarf dynamisch im 32 GB RAM abgelegt.
+- **✨ Vorteile:**
+  - Kein VRAM Out-of-Memory (OOM) Absturz.
+  - Lässt große SDXL-, Turbo- und FLUX-Modelle sowie mehrere LoRAs problemlos auf der 6 GB RTX 3050 laufen.
+- **⚠️ Einschränkungen:**
+  - Durch das kontinuierliche Hin- und Herladen über die PCIe-Schnittstelle in den RAM ist die Bildberechnung **etwas langsamer** als im Normalmodus.
+"""
+    else:
+        return """### ⚡ Status: ⚡ Normalmodus ist AKTIV (Maximales Tempo)
+*Das System nutzt die volle Geschwindigkeit der RTX 3050 ohne Drosselung oder RAM-Transfer.*
+
+- **📊 VRAM-Verbrauch:** Vollständig / Normal (Gesamtes Modell wird im GPU-VRAM gehalten).
+- **⚙️ Funktionsweise:** Keine Auslagerungs-Latenzen während des Samplings; das Modell läuft dauerhaft auf voller GPU-Bandbreite.
+- **✨ Vorteile:**
+  - **Maximale Generierungsgeschwindigkeit!** Keine Verzögerungen durch RAM-Speichertransfers.
+- **⚠️ Einschränkungen:**
+  - Das Modell muss komplett in den 5,72 GB VRAM deiner RTX 3050 passen.
+  - Wenn ein Modell zu groß ist (z.B. große Checkpoints mit vielen LoRAs), bricht die Generierung ab bzw. benötigt die Option 'Modell in RAM mitladen'.
+"""
+
+title = 'Aether Diffusion Studio Pro 2.6 • Autonomous Neural AI'
 
 if isinstance(args_manager.args.preset, str):
-    title += ' ' + args_manager.args.preset
+    title += ' [' + args_manager.args.preset + ']'
 
 shared.gradio_root = gr.Blocks(title=title).queue()
 
 with shared.gradio_root:
     currentTask = gr.State(worker.AsyncTask(args=[]))
     inpaint_engine_state = gr.State('empty')
+    with gr.Row(elem_classes=['aether-header-bar']):
+        header_bar_html = gr.HTML(value=render_header_bar(is_eco=model_management.is_vram_sparmodus()))
     with gr.Row():
         with gr.Column(scale=2):
             with gr.Row():
@@ -167,9 +226,13 @@ with shared.gradio_root:
             gallery = gr.Gallery(label='Gallery', show_label=False, object_fit='contain', visible=True, height=768,
                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                  elem_id='final_gallery')
+            with gr.Row(elem_classes=['quick_download_row']):
+                quick_download_btn = gr.Button(value="💾 In Downloads speichern", elem_classes=['comfy-quick-download-btn'], scale=1)
+                quick_download_status = gr.Markdown(value="", elem_id='quick_download_status', scale=3)
+            last_selected_main_image = gr.State("")
             with gr.Row():
                 with gr.Column(scale=17):
-                    prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
+                    prompt = gr.Textbox(show_label=False, placeholder="Prompt hier eingeben oder Bildbeschreibung verfassen...", elem_id='positive_prompt',
                                         autofocus=True, lines=3)
 
                     default_prompt = modules.config.default_prompt
@@ -177,28 +240,39 @@ with shared.gradio_root:
                         shared.gradio_root.load(lambda: default_prompt, outputs=prompt)
 
                 with gr.Column(scale=3, min_width=0):
-                    generate_button = gr.Button(label="Generate", value="Generate", elem_classes='type_row', elem_id='generate_button', visible=True)
-                    reset_button = gr.Button(label="Reconnect", value="Reconnect", elem_classes='type_row', elem_id='reset_button', visible=False)
-                    load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
-                    skip_button = gr.Button(label="Skip", value="Skip", elem_classes='type_row_half', elem_id='skip_button', visible=False)
-                    stop_button = gr.Button(label="Stop", value="Stop", elem_classes='type_row_half', elem_id='stop_button', visible=False)
+                    generate_button = gr.Button(label="Generate", value="⚡ Generieren", elem_classes=['type_row', 'aether_btn_generate'], elem_id='generate_button', visible=True)
+                    reset_button = gr.Button(label="Reconnect", value="🔄 Neu verbinden", elem_classes=['type_row', 'aether_btn_reconnect'], elem_id='reset_button', visible=False)
+                    load_parameter_button = gr.Button(label="Load Parameters", value="Parameter laden", elem_classes=['type_row', 'aether_btn_params'], elem_id='load_parameter_button', visible=False)
+                    with gr.Row(elem_classes=['aether_action_subrow']):
+                        pause_button = gr.Button(label="Pause", value="⏸️ Pause", elem_classes=['type_row_half', 'aether_btn_pause'], elem_id='pause_button', visible=False)
+                        skip_button = gr.Button(label="Skip", value="⏭️ Skip", elem_classes=['type_row_half', 'aether_btn_skip'], elem_id='skip_button', visible=False)
+                    stop_button = gr.Button(label="Stop", value="⏹️ Sofort-Stopp", elem_classes=['type_row_half', 'aether_btn_stop'], elem_id='stop_button', visible=False)
 
                     def stop_clicked(currentTask):
                         import ldm_patched.modules.model_management as model_management
                         currentTask.last_stop = 'stop'
-                        if (currentTask.processing):
-                            model_management.interrupt_current_processing()
+                        model_management.set_paused(False)
+                        if currentTask.processing:
+                            model_management.interrupt_current_processing(True)
                         return currentTask
 
                     def skip_clicked(currentTask):
                         import ldm_patched.modules.model_management as model_management
                         currentTask.last_stop = 'skip'
-                        if (currentTask.processing):
-                            model_management.interrupt_current_processing()
+                        model_management.set_paused(False)
+                        if currentTask.processing:
+                            model_management.interrupt_current_processing(True)
                         return currentTask
+
+                    def pause_clicked():
+                        import ldm_patched.modules.model_management as model_management
+                        now_paused = model_management.toggle_paused()
+                        new_label = "▶️ Weiter" if now_paused else "⏸️ Pause"
+                        return gr.update(value=new_label)
 
                     stop_button.click(stop_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False, _js='cancelGenerateForever')
                     skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
+                    pause_button.click(pause_clicked, inputs=[], outputs=[pause_button], queue=False, show_progress=False)
             with gr.Row(elem_classes='advanced_check_row'):
                 input_image_checkbox = gr.Checkbox(label='Input Image', value=modules.config.default_image_prompt_checkbox, container=False, elem_classes='min_check')
                 enhance_checkbox = gr.Checkbox(label='Enhance', value=modules.config.default_enhance_checkbox, container=False, elem_classes='min_check')
@@ -243,7 +317,7 @@ with shared.gradio_root:
                                         ip_type.change(lambda x: flags.default_parameters[x], inputs=[ip_type], outputs=[ip_stop, ip_weight], queue=False, show_progress=False)
                                     ip_ad_cols.append(ad_col)
                         ip_advanced = gr.Checkbox(label='Advanced', value=modules.config.default_image_prompt_advanced_checkbox, container=False)
-                        gr.HTML('* \"Image Prompt\" is powered by Fooocus Image Mixture Engine (v1.0.1). <a href="https://github.com/lllyasviel/Fooocus/discussions/557" target="_blank">\U0001F4D4 Documentation</a>')
+                        gr.HTML('* \"Image Prompt\" is powered by Aether Neural Mixture Engine (v2.6).')
 
                         def ip_advance_checked(x):
                             return [gr.update(visible=x)] * len(ip_ad_cols) + \
@@ -267,7 +341,7 @@ with shared.gradio_root:
                                                                      label='Additional Prompt Quick List',
                                                                      components=[inpaint_additional_prompt],
                                                                      visible=False)
-                                gr.HTML('* Powered by Fooocus Inpaint Engine <a href="https://github.com/lllyasviel/Fooocus/discussions/414" target="_blank">\U0001F4D4 Documentation</a>')
+                                gr.HTML('* Powered by Aether Neural Inpaint Studio Engine')
                                 example_inpaint_prompts.click(lambda x: x[0], inputs=example_inpaint_prompts, outputs=inpaint_additional_prompt, show_progress=False, queue=False)
 
                             with gr.Column(visible=modules.config.default_inpaint_advanced_masking_checkbox) as inpaint_mask_generation_col:
@@ -361,7 +435,7 @@ with shared.gradio_root:
 
                     with gr.Tab(label='Metadata', id='metadata_tab') as metadata_tab:
                         with gr.Column():
-                            metadata_input_image = grh.Image(label='For images created by Fooocus', source='upload', type='pil')
+                            metadata_input_image = grh.Image(label='For images created by Aether Diffusion Studio', source='upload', type='pil')
                             metadata_json = gr.JSON(label='Metadata')
                             metadata_import_button = gr.Button(value='Apply Metadata')
 
@@ -471,7 +545,7 @@ with shared.gradio_root:
                                 enhance_inpaint_engine = gr.Dropdown(label='Inpaint Engine',
                                                                      value=modules.config.default_inpaint_engine_version,
                                                                      choices=flags.inpaint_engine_versions,
-                                                                     info='Version of Fooocus inpaint model. If set, use performance Quality or Speed (no performance LoRAs) for best results.')
+                                                                     info='Version of Aether inpaint model. If set, use performance Quality or Speed (no performance LoRAs) for best results.')
                                 enhance_inpaint_strength = gr.Slider(label='Inpaint Denoising Strength',
                                                                      minimum=0.0, maximum=1.0, step=0.001,
                                                                      value=1.0,
@@ -556,17 +630,54 @@ with shared.gradio_root:
                                         outputs=enhance_input_panel, queue=False, show_progress=False, _js=switch_js)
 
         with gr.Column(scale=1, visible=modules.config.default_advanced_checkbox) as advanced_column:
-            with gr.Tab(label='Settings'):
+            with gr.Tab(label='⚙️ Settings & Performance'):
                 if not args_manager.args.disable_preset_selection:
                     preset_selection = gr.Dropdown(label='Preset',
                                                    choices=modules.config.available_presets,
                                                    value=args_manager.args.preset if args_manager.args.preset else "initial",
                                                    interactive=True)
 
+                with gr.Group(elem_classes=['vram_mode_group']):
+                    init_eco = model_management.is_vram_sparmodus()
+                    vram_mode_radio = gr.Radio(
+                        label='💾 GPU VRAM-Betriebsmodus',
+                        choices=['🌱 VRAM-Sparmodus (Eco / Low-VRAM)', '⚡ Normalmodus (Max Speed / Normal-VRAM)'],
+                        value='🌱 VRAM-Sparmodus (Eco / Low-VRAM)' if init_eco else '⚡ Normalmodus (Max Speed / Normal-VRAM)',
+                        elem_classes=['vram_mode_radio']
+                    )
+                    vram_mode_info = gr.Markdown(value=render_vram_info(init_eco), elem_classes=['vram_info_box'])
+
+                    def on_vram_mode_change(choice):
+                        is_eco = (choice == '🌱 VRAM-Sparmodus (Eco / Low-VRAM)')
+                        model_management.set_vram_sparmodus(is_eco)
+                        return render_header_bar(is_eco), render_vram_info(is_eco)
+
+                    vram_mode_radio.change(on_vram_mode_change, inputs=[vram_mode_radio], outputs=[header_bar_html, vram_mode_info], queue=False)
+
                 performance_selection = gr.Radio(label='Performance',
                                                  choices=flags.Performance.values(),
                                                  value=modules.config.default_performance,
                                                  elem_classes=['performance_selection'])
+
+                with gr.Accordion(label='📖 Performance-Modi erklärt (Unterschiede & Details)', open=False, elem_id='performance_accordion'):
+                    gr.Markdown("""
+### ⚡ Die Performance-Modi im Vergleich
+
+| Modus | Schritte | Sampler / CFG | Renderzeit | Empfohlen für |
+| :--- | :---: | :---: | :---: | :--- |
+| **🏆 Quality** | **60 Steps** | dpmpp_2m_sde (CFG ~4–7) | Gründlich & detailliert | Maximale Bildschärfe, feine Texturen & fotorealistische Details |
+| **🚀 Speed** | **30 Steps** | dpmpp_2m_sde (CFG ~4–7) | Standard (sehr schnell) | Der beste Allrounder: Hohe Qualität bei halber Renderzeit |
+| **⚡ Turbo** | **6–8 Steps** | euler (CFG 1.5–2.0) | **Extrem rasant (Sekunden)** | Schnelle Entwürfe & Modelle mit SDXL-Turbo Architektur |
+| **🌩️ Lightning** | **4–8 Steps** | euler (CFG 1.0) | **Ultra-Speed** | ByteDance SDXL-Lightning Beschleunigung (automatische LoRA) |
+| **💎 Hyper-SD** | **4–12 Steps** | dpmpp_sde (CFG 1.0) | Sehr schnell & stabil | Neueste ByteDance Hyper-SD Technologie mit hoher Wiedergabetreue |
+| **🏎️ Extreme Speed** | **8 Steps** | lcm (CFG 1.0) | Nahezu Echtzeit | Latent Consistency Models (LCM LoRA) für blitzschnelle Previews |
+
+---
+#### 💡 Wann nutze ich welchen Modus?
+- **Speed (30 Steps):** Standard für fast alle SDXL-Modelle (Juggernaut, RealVis, Animagine) – perfektes Verhältnis aus Detail und Renderzeit.
+- **Quality (60 Steps):** Wenn du feinste Haare, komplexe Hintergründe oder maximale Detailtiefe suchst.
+- **Turbo / Lightning / Hyper-SD:** Wenn du in wenigen Sekunden neue Bildideen ausprobieren möchtest.
+                    """)
 
                 with gr.Accordion(label='Aspect Ratios', open=False, elem_id='aspect_ratios_accordion') as aspect_ratios_accordion:
                     aspect_ratios_selection = gr.Radio(label='Aspect Ratios', show_label=False,
@@ -651,11 +762,33 @@ with shared.gradio_root:
                                                        show_progress=False).then(
                     lambda: None, _js='()=>{refresh_style_localization();}')
 
-            with gr.Tab(label='Models'):
+            with gr.Tab(label='🧠 Models & VRAM-Hybrid'):
                 with gr.Group():
                     with gr.Row():
                         base_model = gr.Dropdown(label='Base Model (SDXL only)', choices=modules.config.model_filenames, value=modules.config.default_base_model_name, show_label=True)
                         refiner_model = gr.Dropdown(label='Refiner (SDXL or SD 1.5)', choices=['None'] + modules.config.model_filenames, value=modules.config.default_refiner_model_name, show_label=True)
+
+                    custom_folder_models = ['None'] + [f for f in os.listdir(modules.config.path_all_models_sdxl_flux) if f.endswith(('.safetensors', '.ckpt', '.pt', '.bin', '.gguf'))] if os.path.exists(modules.config.path_all_models_sdxl_flux) else ['None']
+                    all_models_dropdown = gr.Dropdown(
+                        label='📁 Alternativ: Modelle aus all_models_sdxl_flux (SDXL / Turbo / FLUX / SD 1.5)',
+                        choices=custom_folder_models,
+                        value='None',
+                        info='Wenn ausgewählt, wird dieses Modell als Basis-Modell geladen.'
+                    )
+
+                    smart_ram_offload_cb = gr.Checkbox(
+                        label='⚡ Modell in RAM mitladen (Smart Hybrid VRAM + RAM Offload)',
+                        value=True,
+                        info='AUTOMATISCH AKTIV: Große Modelle (SDXL, FLUX), die nicht komplett in den RTX 3050 VRAM (~6 GB) passen, lagern Ebenen dynamisch in deinen 32 GB Arbeitsspeicher aus. DEAKTIVIERT: Modell muss zu 100% in die GPU passen – Generierung bricht sofort ab, falls der VRAM nicht ausreicht!',
+                        elem_classes=['smart_ram_checkbox']
+                    )
+
+                    def toggle_smart_ram(enabled):
+                        import ldm_patched.modules.model_management as mm
+                        mm.set_smart_ram_offload(enabled)
+                        print(f"[Aether Studio] Smart RAM Offload: {'AKTIV' if enabled else 'DEAKTIVIERT'}")
+
+                    smart_ram_offload_cb.change(toggle_smart_ram, inputs=[smart_ram_offload_cb], outputs=[], queue=False)
 
                     refiner_switch = gr.Slider(label='Refiner Switch At', minimum=0.1, maximum=1.0, step=0.0001,
                                                info='Use 0.4 for SD1.5 realistic models; '
@@ -680,11 +813,60 @@ with shared.gradio_root:
                                                      elem_classes='lora_model', scale=5)
                             lora_weight = gr.Slider(label='Weight', minimum=modules.config.default_loras_min_weight,
                                                     maximum=modules.config.default_loras_max_weight, step=0.01, value=weight,
-                                                    elem_classes='lora_weight', scale=5)
+                                                     elem_classes='lora_weight', scale=5)
                             lora_ctrls += [lora_enabled, lora_model, lora_weight]
 
                 with gr.Row():
                     refresh_files = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
+
+            with gr.Tab(label='🌐 Modell-Manager & VRAM-Rechner'):
+                hardware_specs = model_checker.get_hardware_specs()
+                gr.Markdown(f"### 🖥️ Deine Hardware-Erkennung\n{hardware_specs['display']}")
+
+                with gr.Group():
+                    gr.Markdown("### 🧮 VRAM- & Kompatibilitäts-Rechner (Civitai Check)")
+                    with gr.Row():
+                        model_calc_input = gr.Textbox(
+                            label='Civitai-URL oder Modellname eingeben',
+                            placeholder='z.B. https://civitai.com/models/618692/flux1-dev oder flux schnell fp8 oder dreamshaper 1.5',
+                            scale=4
+                        )
+                        model_calc_btn = gr.Button('🔍 Kompatibilität berechnen', variant='primary', elem_classes=['comfy-quick-download-btn'], scale=1)
+
+                    with gr.Row():
+                        btn_test_flux_schnell = gr.Button("⚡ FLUX.1 [schnell] FP8", scale=1)
+                        btn_test_flux_dev = gr.Button("⚡ FLUX.1 [dev] FP8", scale=1)
+                        btn_test_flux_fp16 = gr.Button("🔥 FLUX.1 [dev] FP16", scale=1)
+                        btn_test_turbo = gr.Button("🚀 SDXL Turbo", scale=1)
+                        btn_test_sd15 = gr.Button("🎨 SD 1.5 Realistic", scale=1)
+
+                    model_calc_result = gr.Markdown(value="*Gib oben einen Modellnamen oder eine URL ein, um zu berechnen, ob und wie das Modell auf deiner RTX 3050 läuft.*")
+
+                with gr.Accordion(label="📂 Eigener Ordner: models/all_models_sdxl_flux", open=True):
+                    gr.Markdown(f"**Pfad:** `{modules.config.path_all_models_sdxl_flux}`\n\n*Alle Modelle in diesem Ordner werden automatisch von Aether Studio erkannt!*")
+                    def get_custom_folder_files():
+                        p = modules.config.path_all_models_sdxl_flux
+                        if os.path.exists(p):
+                            files = [f for f in os.listdir(p) if f.endswith(('.safetensors', '.ckpt', '.pt', '.bin', '.gguf'))]
+                            if files:
+                                return "📁 **Gefundene Modelle im Ordner:**\n" + "\n".join([f"- `{f}`" for f in files])
+                        return "*(Ordner ist momentan noch leer. Kopiere deine SDXL-, Turbo-, SD 1.5- oder FLUX-Modelle hier hinein!)*"
+                    custom_folder_file_list = gr.Markdown(value=get_custom_folder_files())
+                    refresh_custom_folder_btn = gr.Button("🔄 Ordnerinhalt aktualisieren")
+
+                with gr.Accordion(label="📋 Übersicht: Welche Modelle werden unterstützt?", open=False):
+                    gr.Markdown("""
+| Modell-Familie | Auflösung | Steps | Benötigter VRAM | Läuft auf RTX 3050? |
+| :--- | :--- | :--- | :--- | :--- |
+| **SDXL 1.0 (Standard)** | 1024x1024 | 30 | 5-6 GB | 🟢 Ja (mit `./run_lowvram.sh`) |
+| **SDXL Turbo / Lightning** | 1024x1024 | 4-6 | 5-6 GB | 🟢 Ja, extrem schnell (4-8s pro Bild) |
+| **Stable Diffusion 1.5** | 512x512 | 20-30 | 3-4 GB | 🟢 Ja, superschnell (2-5s pro Bild) |
+| **Pony Diffusion V6 XL** | 1024x1024 | 25-30 | 5-6 GB | 🟢 Ja (mit `./run_lowvram.sh`) |
+| **FLUX.1 [schnell] FP8** | 1024x1024 | 4 | ~6 GB VRAM + 16GB RAM | 🟡 Ja, dank deinen **32 GB RAM**! |
+| **FLUX.1 [dev] FP8 / GGUF** | 1024x1024 | 20 | ~6 GB VRAM + 24GB RAM | 🟡 Ja, dank deinen **32 GB RAM**! |
+| **FLUX.1 [dev] FP16** | 1024x1024 | 20 | 24 GB VRAM | 🔴 Nein (nur FP8/GGUF empfohlen) |
+""")
+
             with gr.Tab(label='Advanced'):
                 guidance_scale = gr.Slider(label='Guidance Scale', minimum=1.0, maximum=30.0, step=0.01,
                                            value=modules.config.default_cfg_scale,
@@ -710,7 +892,7 @@ with shared.gradio_root:
 
                         adaptive_cfg = gr.Slider(label='CFG Mimicking from TSNR', minimum=1.0, maximum=30.0, step=0.01,
                                                  value=modules.config.default_cfg_tsnr,
-                                                 info='Enabling Fooocus\'s implementation of CFG mimicking for TSNR '
+                                                 info='Enabling Aether\'s implementation of CFG mimicking for TSNR '
                                                       '(effective when real CFG > mimicked CFG).')
                         clip_skip = gr.Slider(label='CLIP Skip', minimum=1, maximum=flags.clip_skip_max, step=1,
                                                  value=modules.config.default_clip_skip,
@@ -815,7 +997,7 @@ with shared.gradio_root:
                         inpaint_engine = gr.Dropdown(label='Inpaint Engine',
                                                      value=modules.config.default_inpaint_engine_version,
                                                      choices=flags.inpaint_engine_versions,
-                                                     info='Version of Fooocus inpaint model. If set, use performance Quality or Speed (no performance LoRAs) for best results.')
+                                                     info='Version of Aether inpaint model. If set, use performance Quality or Speed (no performance LoRAs) for best results.')
                         inpaint_strength = gr.Slider(label='Inpaint Denoising Strength',
                                                      minimum=0.0, maximum=1.0, step=0.001, value=1.0,
                                                      info='Same as the denoising strength in A1111 inpaint. '
@@ -870,8 +1052,10 @@ with shared.gradio_root:
 
                 def refresh_files_clicked():
                     modules.config.update_files()
+                    custom_folder_models = ['None'] + [f for f in os.listdir(modules.config.path_all_models_sdxl_flux) if f.endswith(('.safetensors', '.ckpt', '.pt', '.bin', '.gguf'))] if os.path.exists(modules.config.path_all_models_sdxl_flux) else ['None']
                     results = [gr.update(choices=modules.config.model_filenames)]
                     results += [gr.update(choices=['None'] + modules.config.model_filenames)]
+                    results += [gr.update(choices=custom_folder_models)]
                     results += [gr.update(choices=[flags.default_vae] + modules.config.vae_filenames)]
                     if not args_manager.args.disable_preset_selection:
                         results += [gr.update(choices=modules.config.available_presets)]
@@ -880,11 +1064,49 @@ with shared.gradio_root:
                                     gr.update(choices=['None'] + modules.config.lora_filenames), gr.update()]
                     return results
 
-                refresh_files_output = [base_model, refiner_model, vae_name]
+                refresh_files_output = [base_model, refiner_model, all_models_dropdown, vae_name]
                 if not args_manager.args.disable_preset_selection:
                     refresh_files_output += [preset_selection]
                 refresh_files.click(refresh_files_clicked, [], refresh_files_output + lora_ctrls,
                                     queue=False, show_progress=False)
+
+            with gr.Tab(label='🖼️ Verlauf & Downloads', elem_id='history_tab'):
+                with gr.Row():
+                    history_refresh_btn = gr.Button(value="🔄 Verlauf aktualisieren", scale=1)
+                    history_download_all_today_btn = gr.Button(value="📥 Alle von heute in Downloads speichern", scale=2)
+                history_status = gr.Markdown(value="", elem_id="history_status")
+                with gr.Row():
+                    with gr.Column(scale=3):
+                        history_gallery = gr.Gallery(
+                            label='Generierungs-Verlauf (Klicke auf ein Bild für Details & Download)',
+                            show_label=True,
+                            columns=3,
+                            height=560,
+                            object_fit='contain',
+                            elem_classes=['history_gallery']
+                        )
+                        history_image_paths = gr.State([])
+                    with gr.Column(scale=2):
+                        history_selected_preview = grh.Image(label='Vorschau', show_label=True, height=260)
+                        history_selected_path = gr.State("")
+                        with gr.Row():
+                            history_download_btn = gr.Button(value="💾 In Downloads speichern", elem_classes=['comfy-quick-download-btn'], scale=1)
+                            history_load_prompt_btn = gr.Button(value="📋 Prompt laden", scale=1)
+                        history_load_input_btn = gr.Button(value="🔄 In Input Image (Upscale) senden")
+                        history_info_box = gr.Markdown(value="*Klicke auf ein Bild links, um Details & Prompt anzuzeigen.*")
+
+            with gr.Tab(label='📚 Guide (3D & Anime)', elem_id='guide_tab'):
+                gr.Markdown(prompt_guide.GUIDE_MARKDOWN_TEXT)
+                gr.Markdown("### ⚡ 1-Klick Vorlagen (Templates)")
+                with gr.Row():
+                    guide_template_dropdown = gr.Dropdown(
+                        label="Wähle eine Vorlage aus:",
+                        choices=prompt_guide.get_template_names(),
+                        value=prompt_guide.get_template_names()[0]
+                    )
+                guide_template_info = gr.Markdown(value="")
+                guide_apply_btn = gr.Button(value="📥 Vorlage in Prompt & Generator laden", variant='primary', elem_classes=['comfy-quick-download-btn'])
+                guide_apply_status = gr.Markdown(value="")
 
         state_is_generating = gr.State(False)
 
@@ -1038,21 +1260,186 @@ with shared.gradio_root:
         metadata_import_button.click(trigger_metadata_import, inputs=[metadata_input_image, state_is_generating], outputs=load_data_outputs, queue=False, show_progress=True) \
             .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False)
 
-        generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=True, interactive=True), gr.update(visible=False, interactive=False), [], True),
-                              outputs=[stop_button, skip_button, generate_button, gallery, state_is_generating]) \
+        # Quick download below main gallery
+        def quick_download_clicked(selected_img, task):
+            target = None
+            if selected_img and os.path.exists(selected_img):
+                target = selected_img
+            elif task and hasattr(task, 'results') and task.results:
+                for res in reversed(task.results):
+                    if isinstance(res, str) and os.path.exists(res):
+                        target = res
+                        break
+            if not target:
+                recent = history_manager.scan_history_images(limit=1)
+                if recent:
+                    target = recent[0]
+
+            if target:
+                ok, msg = history_manager.copy_image_to_downloads(target)
+                return msg
+            return "❌ Noch kein Bild vorhanden."
+
+        def on_main_gallery_select(evt: gr.SelectData, task):
+            if task and hasattr(task, 'results') and task.results:
+                idx = evt.index
+                if 0 <= idx < len(task.results):
+                    res = task.results[idx]
+                    if isinstance(res, str) and os.path.exists(res):
+                        return res
+            if evt.value and isinstance(evt.value, str) and os.path.exists(evt.value):
+                return evt.value
+            return ""
+
+        gallery.select(on_main_gallery_select, inputs=[currentTask], outputs=[last_selected_main_image], queue=False, show_progress=False)
+        quick_download_btn.click(quick_download_clicked, inputs=[last_selected_main_image, currentTask], outputs=[quick_download_status], queue=False)
+
+        # History and Downloads Manager
+        def reload_history_gallery():
+            imgs = history_manager.scan_history_images(limit=80)
+            return gr.update(value=imgs), imgs
+
+        history_refresh_btn.click(reload_history_gallery, outputs=[history_gallery, history_image_paths], queue=False)
+        shared.gradio_root.load(reload_history_gallery, outputs=[history_gallery, history_image_paths], queue=False)
+
+        def on_history_select(evt: gr.SelectData, paths):
+            if not paths or evt.index >= len(paths):
+                return None, "", "*Keine Details gefunden.*"
+            selected = paths[evt.index]
+            details = history_manager.get_image_details(selected)
+            return selected, selected, details["info_markdown"]
+
+        history_gallery.select(on_history_select, inputs=[history_image_paths], outputs=[history_selected_preview, history_selected_path, history_info_box], queue=False)
+
+        def on_history_download(selected_path):
+            if not selected_path:
+                return "❌ Bitte wähle zuerst ein Bild aus dem Verlauf aus."
+            ok, msg = history_manager.copy_image_to_downloads(selected_path)
+            return msg
+
+        history_download_btn.click(on_history_download, inputs=[history_selected_path], outputs=[history_status], queue=False)
+
+        def on_history_load_prompt(selected_path):
+            if not selected_path:
+                return gr.update(), gr.update()
+            details = history_manager.get_image_details(selected_path)
+            return gr.update(value=details["prompt"]), gr.update(value=details["negative_prompt"])
+
+        history_load_prompt_btn.click(on_history_load_prompt, inputs=[history_selected_path], outputs=[prompt, negative_prompt], queue=False)
+
+        def on_history_load_input(selected_path):
+            if not selected_path or not os.path.exists(selected_path):
+                return gr.update(), gr.update()
+            import cv2
+            img = cv2.imread(selected_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            return img, True
+
+        history_load_input_btn.click(on_history_load_input, inputs=[history_selected_path], outputs=[uov_input_image, input_image_checkbox], queue=False)
+
+        def on_download_all_today():
+            today_str = time.strftime("%Y-%m-%d")
+            today_folder = os.path.join(modules.config.path_outputs, today_str)
+            if not os.path.exists(today_folder):
+                return f"❌ Heute ({today_str}) wurden noch keine Bilder generiert."
+            images = []
+            for ext in ('*.png', '*.jpg', '*.jpeg', '*.webp'):
+                images.extend(glob.glob(os.path.join(today_folder, ext)))
+            if not images:
+                return f"❌ Keine Bilder für heute ({today_str}) gefunden."
+            ok, msg = history_manager.copy_multiple_to_downloads(images)
+            return msg
+
+        history_download_all_today_btn.click(on_download_all_today, outputs=[history_status], queue=False)
+
+        # Guide (3D & Anime)
+        def on_guide_template_change(name):
+            tmpl = prompt_guide.GUIDE_TEMPLATES.get(name, {})
+            if not tmpl:
+                return ""
+            return f"**Kategorie:** `{tmpl.get('category')}` | **Empfohlenes Modell:** `{tmpl.get('recommended_model')}`\n\n**Beschreibung:** {tmpl.get('description')}\n\n**Prompt-Vorschau:**\n> {tmpl.get('prompt')}\n\n**Stile:** `{tmpl.get('styles')}` | **CFG:** `{tmpl.get('guidance_scale')}` | **Format:** `{tmpl.get('aspect_ratio')}`"
+
+        guide_template_dropdown.change(on_guide_template_change, inputs=[guide_template_dropdown], outputs=[guide_template_info], queue=False)
+        shared.gradio_root.load(lambda: on_guide_template_change(prompt_guide.get_template_names()[0]), outputs=[guide_template_info], queue=False)
+
+        def on_guide_apply(name):
+            prompt_val, neg_prompt_val, styles_val, ar_val, cfg_val, model_val = prompt_guide.load_template_data(name)
+            status_msg = f"✅ Vorlage **{name}** geladen! Prompt, Stile und Einstellungen wurden übernommen."
+            model_update = gr.update()
+            if model_val and model_val in modules.config.model_filenames:
+                model_update = gr.update(value=model_val)
+                status_msg += f" Basis-Modell auf `{model_val}` gesetzt."
+            ar_update = gr.update()
+            if ar_val:
+                try:
+                    ar_formatted = modules.config.add_ratio(ar_val)
+                    ar_update = gr.update(value=ar_formatted)
+                except Exception:
+                    ar_update = gr.update(value=ar_val)
+            return [
+                gr.update(value=prompt_val),
+                gr.update(value=neg_prompt_val),
+                gr.update(value=styles_val),
+                ar_update,
+                gr.update(value=cfg_val),
+                model_update,
+                status_msg
+            ]
+
+        guide_apply_btn.click(
+            on_guide_apply,
+            inputs=[guide_template_dropdown],
+            outputs=[prompt, negative_prompt, style_selections, aspect_ratios_selection, guidance_scale, base_model, guide_apply_status],
+            queue=False
+        ).then(fn=style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False)
+
+        # Model Compatibility & VRAM Calculator handlers
+        model_calc_btn.click(fn=model_checker.calculate_compatibility, inputs=[model_calc_input], outputs=[model_calc_result], queue=False)
+        model_calc_input.submit(fn=model_checker.calculate_compatibility, inputs=[model_calc_input], outputs=[model_calc_result], queue=False)
+
+        btn_test_flux_schnell.click(lambda: ("flux schnell fp8", model_checker.calculate_compatibility("flux schnell fp8")), outputs=[model_calc_input, model_calc_result], queue=False)
+        btn_test_flux_dev.click(lambda: ("flux dev fp8", model_checker.calculate_compatibility("flux dev fp8")), outputs=[model_calc_input, model_calc_result], queue=False)
+        btn_test_flux_fp16.click(lambda: ("flux dev fp16", model_checker.calculate_compatibility("flux dev fp16")), outputs=[model_calc_input, model_calc_result], queue=False)
+        btn_test_turbo.click(lambda: ("sdxl turbo", model_checker.calculate_compatibility("sdxl turbo")), outputs=[model_calc_input, model_calc_result], queue=False)
+        btn_test_sd15.click(lambda: ("sd 1.5", model_checker.calculate_compatibility("sd 1.5")), outputs=[model_calc_input, model_calc_result], queue=False)
+
+        refresh_custom_folder_btn.click(fn=get_custom_folder_files, outputs=[custom_folder_file_list], queue=False)
+
+        def on_custom_model_select(m):
+            if m and m != 'None':
+                return gr.update(value=m)
+            return gr.update()
+
+        all_models_dropdown.change(on_custom_model_select, inputs=[all_models_dropdown], outputs=[base_model], queue=False)
+
+        generate_button.click(lambda: (gr.update(visible=True, interactive=True),
+                                      gr.update(visible=True, interactive=True),
+                                      gr.update(visible=True, interactive=True, value="⏸️ Pause"),
+                                      gr.update(visible=False, interactive=False), [], True),
+                              outputs=[stop_button, skip_button, pause_button, generate_button, gallery, state_is_generating]) \
             .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
             .then(fn=get_task, inputs=ctrls, outputs=currentTask) \
             .then(fn=generate_clicked, inputs=currentTask, outputs=[progress_html, progress_window, progress_gallery, gallery]) \
-            .then(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=False, interactive=False), gr.update(visible=False, interactive=False), False),
-                  outputs=[generate_button, stop_button, skip_button, state_is_generating]) \
+            .then(lambda: (gr.update(visible=True, interactive=True),
+                           gr.update(visible=False, interactive=False),
+                           gr.update(visible=False, interactive=False),
+                           gr.update(visible=False, interactive=False), False),
+                  outputs=[generate_button, stop_button, skip_button, pause_button, state_is_generating]) \
             .then(fn=update_history_link, outputs=history_link) \
+            .then(reload_history_gallery, outputs=[history_gallery, history_image_paths], queue=False) \
             .then(fn=lambda: None, _js='playNotification').then(fn=lambda: None, _js='refresh_grid_delayed')
 
-        reset_button.click(lambda: [worker.AsyncTask(args=[]), False, gr.update(visible=True, interactive=True)] +
-                                   [gr.update(visible=False)] * 6 +
-                                   [gr.update(visible=True, value=[])],
+        def reset_clicked():
+            import ldm_patched.modules.model_management as mm
+            mm.set_paused(False)
+            mm.interrupt_current_processing(False)
+            return [worker.AsyncTask(args=[]), False, gr.update(visible=True, interactive=True)] + \
+                   [gr.update(visible=False)] * 7 + \
+                   [gr.update(visible=True, value=[])]
+
+        reset_button.click(reset_clicked,
                            outputs=[currentTask, state_is_generating, generate_button,
-                                    reset_button, stop_button, skip_button,
+                                    reset_button, stop_button, skip_button, pause_button,
                                     progress_html, progress_window, progress_gallery, gallery],
                            queue=False)
 

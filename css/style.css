@@ -416,3 +416,397 @@ div:has(> #positive_prompt) {
 #inpaint_brush_color input[type=color]{
   background: none;
 }
+
+/* ==========================================================================
+   ComfyUI-Inspired Dark Studio Theme & Modern Polish
+   ========================================================================== */
+
+:root {
+  --comfy-bg-dark: #121316;
+  --comfy-panel: #1b1c23;
+  --comfy-panel-hover: #22242d;
+  --comfy-border: #2c2e3b;
+  --comfy-border-light: #383a4c;
+  --comfy-blue: #3b82f6;
+  --comfy-blue-hover: #2563eb;
+  --comfy-cyan: #06b6d4;
+  --comfy-emerald: #10b981;
+  --comfy-text: #f3f4f6;
+  --comfy-text-muted: #9ca3af;
+}
+
+body, gradio-app {
+  background-color: var(--comfy-bg-dark) !important;
+  color: var(--comfy-text) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #14151a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e303d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #45475a;
+}
+
+/* Prompt Box Comfy UI Styling */
+#positive_prompt textarea, #negative_prompt textarea {
+  background: #17181f !important;
+  border: 1px solid #2e303d !important;
+  border-radius: 8px !important;
+  color: #e5e7eb !important;
+  font-size: 14.5px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#positive_prompt textarea:focus, #negative_prompt textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* ==========================================================================
+   AETHER DIFFUSION STUDIO PRO - THEME & COMPONENT STYLES
+   ========================================================================== */
+
+/* Studio Action Buttons */
+#generate_button, .aether_btn_generate {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45) !important;
+  border-radius: 9px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+#generate_button:hover, .aether_btn_generate:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #9333ea 50%, #22d3ee 100%) !important;
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.6) !important;
+  transform: translateY(-1px) scale(1.01);
+}
+
+.aether_action_subrow {
+  display: flex !important;
+  gap: 6px !important;
+  margin-bottom: 5px !important;
+}
+
+#pause_button, .aether_btn_pause {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border: 1px solid #fbbf24 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#pause_button:hover, .aether_btn_pause:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5) !important;
+}
+
+#skip_button, .aether_btn_skip {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+  border: 1px solid #475569 !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#skip_button:hover, .aether_btn_skip:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  color: #ffffff !important;
+}
+
+#stop_button, .aether_btn_stop {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+  border: 1px solid #f87171 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.4) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#stop_button:hover, .aether_btn_stop:hover {
+  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%) !important;
+  box-shadow: 0 5px 16px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Prompt Box Modern Styling */
+#positive_prompt textarea {
+  border-radius: 9px !important;
+  border: 1px solid #272b3c !important;
+  background: #111420 !important;
+  color: #f1f5f9 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  transition: all 0.2s ease !important;
+}
+#positive_prompt textarea:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Smart RAM Checkbox Glow */
+.smart_ram_checkbox {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-top: 8px !important;
+}
+
+/* Studio Tabs Navigation */
+.tabs > .tab-nav {
+  border-bottom: 1px solid #232736 !important;
+  background: #0f121d !important;
+  border-radius: 10px 10px 0 0 !important;
+  padding: 5px !important;
+  gap: 5px !important;
+}
+
+.tabs > .tab-nav > button {
+  border-radius: 7px !important;
+  padding: 7px 15px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  border: none !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+}
+
+.tabs > .tab-nav > button:hover {
+  color: #f8fafc !important;
+  background: #1a1e2e !important;
+}
+
+.tabs > .tab-nav > button.selected {
+  color: #38bdf8 !important;
+  background: #172033 !important;
+  border-bottom: 2px solid #38bdf8 !important;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* Aether Studio Header Status Bar */
+.aether-header-bar {
+  margin-bottom: 12px !important;
+}
+
+.aether-header-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #10131e 0%, #151826 100%);
+  border: 1px solid #232738;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.aether-brand-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aether-symbol {
+  font-size: 20px;
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.5));
+}
+
+.aether-studio-title {
+  font-weight: 800;
+  font-size: 16px;
+  color: #f1f5f9;
+  letter-spacing: 0.8px;
+}
+
+.aether-accent-text {
+  color: #38bdf8;
+}
+
+.aether-studio-version {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.aether-divider-pipe {
+  color: #334155;
+  font-size: 14px;
+}
+
+.aether-hw-badge {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  background: #181d2c;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #272d42;
+}
+
+.aether-hw-tag {
+  color: #38bdf8;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.aether-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+}
+
+.aether-online-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.aether-status-badge-text {
+  color: #34d399;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+/* Quick Download Button */
+.comfy-quick-download-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 1px solid #10b981 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+.comfy-quick-download-btn:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+/* Guide and Template Cards */
+.guide-card {
+  background: #131724;
+  border: 1px solid #24293c;
+  border-radius: 9px;
+  padding: 13px 18px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.guide-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.15);
+}
+.guide-badge-3d {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+.guide-badge-anime {
+  background: rgba(236, 72, 153, 0.2);
+  color: #f472b6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(236, 72, 153, 0.4);
+}
+
+/* VRAM Mode Badges in Header */
+.aether-badge-eco {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(16, 185, 129, 0.45) !important;
+  color: #a7f3d0 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+
+.aether-badge-speed {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #bae6fd !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* VRAM Mode Settings Group & Info Card */
+.vram_mode_group {
+  background: #121624 !important;
+  border: 1px solid #23293e !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 14px !important;
+}
+
+.vram_mode_radio {
+  margin-bottom: 8px !important;
+}
+
+.vram_info_box {
+  background: #0f131f !important;
+  border: 1px solid #1f2538 !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  color: #cbd5e1 !important;
+}
+.vram_info_box h3 {
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+  font-size: 14.5px !important;
+}
+.vram_info_box ul {
+  padding-left: 18px !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+}
+.vram_info_box li {
+  margin-bottom: 3px !important;
+}

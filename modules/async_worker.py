@@ -849,6 +849,25 @@ def worker():
         async_task.adm_scaler_end = 0.0
         return current_progress
 
+    def set_turbo_defaults(async_task, current_progress, advance_progress=False):
+        print('Enter Turbo mode.')
+        if advance_progress:
+            current_progress += 1
+        progressbar(async_task, current_progress, 'Applying Turbo settings (Euler, CFG 1.5, Karras) ...')
+        if async_task.refiner_model_name != 'None':
+            print(f'Refiner disabled in Turbo mode.')
+        async_task.refiner_model_name = 'None'
+        async_task.sampler_name = 'euler'
+        async_task.scheduler_name = 'karras'
+        async_task.sharpness = 0.0
+        async_task.cfg_scale = 1.5
+        async_task.adaptive_cfg = 1.0
+        async_task.refiner_switch = 1.0
+        async_task.adm_scaler_positive = 1.0
+        async_task.adm_scaler_negative = 1.0
+        async_task.adm_scaler_end = 0.0
+        return current_progress
+
     def apply_image_input(async_task, base_model_additional_loras, clip_vision_path, controlnet_canny_path,
                           controlnet_cpds_path, goals, inpaint_head_model_path, inpaint_image, inpaint_mask,
                           inpaint_parameterized,  ip_adapter_face_path, ip_adapter_path, ip_negative_path,
@@ -1096,6 +1115,8 @@ def worker():
             set_lightning_defaults(async_task, current_progress, advance_progress=True)
         elif async_task.performance_selection == Performance.HYPER_SD:
             set_hyper_sd_defaults(async_task, current_progress, advance_progress=True)
+        elif async_task.performance_selection == Performance.TURBO:
+            set_turbo_defaults(async_task, current_progress, advance_progress=True)
 
         print(f'[Parameters] Adaptive CFG = {async_task.adaptive_cfg}')
         print(f'[Parameters] CLIP Skip = {async_task.clip_skip}')
@@ -1115,8 +1136,13 @@ def worker():
         denoising_strength = 1.0
         tiled = False
 
-        width, height = async_task.aspect_ratios_selection.replace('×', ' ').split(' ')[:2]
-        width, height = int(width), int(height)
+        import re
+        ar_str = str(async_task.aspect_ratios_selection)
+        numbers = re.findall(r'\d+', ar_str)
+        if len(numbers) >= 2:
+            width, height = int(numbers[0]), int(numbers[1])
+        else:
+            width, height = 1024, 1024
 
         skip_prompt_processing = False
 
@@ -1473,8 +1499,12 @@ def worker():
                     build_image_wall(task)
                 task.yields.append(['finish', task.results])
                 pipeline.prepare_text_encoder(async_call=True)
-            except:
+            except Exception as e:
                 traceback.print_exc()
+                err_text = str(e)
+                if "VRAM-Überlauf" in err_text:
+                    task.yields.append(['preview', (0, f"❌ {err_text}", None)])
+                    time.sleep(2.0)
                 task.yields.append(['finish', task.results])
             finally:
                 if pid in modules.patch.patch_settings:

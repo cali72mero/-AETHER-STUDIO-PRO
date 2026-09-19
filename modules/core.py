@@ -294,7 +294,7 @@ def ksampler(model, positive, negative, latent, seed=None, steps=30, cfg=7.0, sa
         previewer_end = steps
 
     def callback(step, x0, x, total_steps):
-        ldm_patched.modules.model_management.throw_exception_if_processing_interrupted()
+        ldm_patched.modules.model_management.check_pause_and_interrupt()
         y = None
         if previewer is not None and not disable_preview:
             y = previewer(x0, previewer_start + step, previewer_end)
