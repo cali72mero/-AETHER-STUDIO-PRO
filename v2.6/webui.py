@@ -708,19 +708,25 @@ with shared.gradio_root:
                     )
                     prompt_magier_mode = gr.Radio(
                         label='Magier-Modus',
-                        choices=['Auto (Deutsch ➔ Englisch + Detail-Boost)', 'Nur Übersetzen (ohne extra Tags)', 'Nur Qualitäts-Boost (Englisch beibehalten)'],
-                        value='Auto (Deutsch ➔ Englisch + Detail-Boost)'
+                        choices=[
+                            '🧠 KI-Übersetzung + Qualitäts-Boost (Empfohlen)',
+                            '✨ KI-Übersetzung + KI-Prompt-Ersteller (Erweitert Details)',
+                            '🌐 Nur KI-Übersetzung (Deutsch ➔ Englisch)',
+                            '🎨 Nur Qualitäts-Boost (Englisch beibehalten)'
+                        ],
+                        value='🧠 KI-Übersetzung + Qualitäts-Boost (Empfohlen)'
                     )
 
                     enable_prompt_magier.change(lambda en: gr.update(visible=en), inputs=enable_prompt_magier, outputs=prompt_magier_row, queue=False)
 
                     def on_prompt_magier_click(current_prompt, mode_choice):
                         mode_map = {
-                            'Auto (Deutsch ➔ Englisch + Detail-Boost)': 'auto',
-                            'Nur Übersetzen (ohne extra Tags)': 'translate_only',
-                            'Nur Qualitäts-Boost (Englisch beibehalten)': 'enhance'
+                            '🧠 KI-Übersetzung + Qualitäts-Boost (Empfohlen)': 'neural_auto',
+                            '✨ KI-Übersetzung + KI-Prompt-Ersteller (Erweitert Details)': 'neural_expand',
+                            '🌐 Nur KI-Übersetzung (Deutsch ➔ Englisch)': 'neural_translate_only',
+                            '🎨 Nur Qualitäts-Boost (Englisch beibehalten)': 'enhance_only'
                         }
-                        mode = mode_map.get(mode_choice, 'auto')
+                        mode = mode_map.get(mode_choice, 'neural_auto')
                         return prompt_magier.translate_and_enhance_prompt(current_prompt, mode=mode)
 
                     prompt_magier_btn.click(on_prompt_magier_click, inputs=[prompt, prompt_magier_mode], outputs=prompt, queue=False)

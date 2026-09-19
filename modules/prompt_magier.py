@@ -1,7 +1,12 @@
-# Aether Studio Pro - Prompt-Magier & Übersetzer (Deutsch -> Englisch & Quality Enhancer)
+# Aether Studio Pro - Neural KI-Übersetzer & Prompt-Ersteller
+# 100% LOKAL: Übersetzt deutsche Sätze flüssig ins Englische und entlädt das Modell SOFORT aus dem Speicher!
+import os
 import re
+import gc
+import torch
+import modules.default_pipeline as pipeline
 
-# Comprehensive German to English AI Terminology Dictionary
+# Comprehensive German to English Fallback Dictionary
 DE_EN_DICT = {
     # Subjects & Characters
     "frau": "woman", "frauen": "women", "mann": "man", "männer": "men", "mädchen": "girl",
@@ -12,6 +17,7 @@ DE_EN_DICT = {
     "pferd": "horse", "fuchs": "fox", "dämon": "demon", "engel": "angel", "elf": "elf", "elfe": "female elf",
     "zwerg": "dwarf", "vampir": "vampire", "cyborg": "cyborg", "samurai": "samurai", "ninja": "ninja",
     "soldat": "soldier", "astronaut": "astronaut", "pirat": "pirate", "göttin": "goddess", "gott": "god",
+    "fischer": "fisherman",
 
     # Features & Anatomy
     "haare": "hair", "augen": "eyes", "gesicht": "face", "hände": "hands", "haut": "skin",
@@ -20,12 +26,14 @@ DE_EN_DICT = {
     "lange haare": "long hair", "kurze haare": "short hair", "locken": "curly hair",
     "lächelnd": "smiling", "ernst": "serious", "mutig": "brave", "wunderschön": "beautiful",
     "hübsch": "pretty", "attraktiv": "attractive", "muskulös": "muscular", "schlank": "slender",
+    "bärtig": "bearded",
 
     # Clothing & Armor
     "kleid": "dress", "rüstung": "armor", "plattenrüstung": "plate armor", "lederjacke": "leather jacket",
     "mantel": "coat", "umhang": "cape", "kapuze": "hood", "anzug": "suit", "hemd": "shirt",
     "hose": "pants", "stiefel": "boots", "krone": "crown", "helm": "helmet", "schmuck": "jewelry",
     "schwert": "sword", "schild": "shield", "bogen": "bow", "feuerwaffe": "gun", "stab": "staff",
+    "netz": "net",
 
     # Environments & Scenery
     "regen": "rain", "neonregen": "neon rain", "schnee": "snow", "sturm": "storm", "gewitter": "thunderstorm",
@@ -36,7 +44,8 @@ DE_EN_DICT = {
     "wald": "forest", "dunkler wald": "dark mystical forest", "dschungel": "jungle", "berge": "mountains",
     "ozean": "ocean", "meer": "sea", "strand": "beach", "insel": "island", "wüste": "desert",
     "weltall": "outer space", "universum": "universe", "galaxie": "galaxy", "sterne": "stars",
-    "straße": "street", "himmel": "sky", "wolken": "clouds", "unterwasser": "underwater",
+    "straße": "street", "himmel": "sky", "wolken": "clouds", "unterwasser": "underwater", "hafen": "port, harbor",
+    "pier": "wooden pier",
 
     # Styles & Mediums
     "fotorealistisch": "photorealistic", "foto": "photograph", "porträt": "portrait",
@@ -54,44 +63,113 @@ DE_EN_DICT = {
     "meisterwerk": "masterpiece, best quality", "realistisch": "hyperrealistic", "glänzend": "glossy, shimmering"
 }
 
-QUALITY_MODIFIERS = [
-    "masterpiece", "best quality", "hyperrealistic", "8k resolution",
-    "cinematic lighting", "intricate details", "sharp focus"
+PROMPT_EXPANSION_KEYWORDS = [
+    "masterpiece", "best quality", "photorealistic", "8k resolution",
+    "cinematic lighting", "intricate details", "sharp focus", "ray tracing"
 ]
 
-def translate_and_enhance_prompt(prompt: str, mode: str = "auto") -> str:
+
+def dictionary_fallback_translate(text: str) -> str:
+    """Fast regex/dictionary based translation fallback."""
+    cleaned = text
+    sorted_dict = sorted(DE_EN_DICT.items(), key=lambda x: len(x[0]), reverse=True)
+    for de_term, en_term in sorted_dict:
+        pattern = re.compile(rf'\b{re.escape(de_term)}\b', re.IGNORECASE)
+        cleaned = pattern.sub(en_term, cleaned)
+    return cleaned
+
+
+def neural_translate_de_to_en(text: str) -> str:
     """
-    Translates German terms to English and enriches the prompt with pro SDXL modifiers.
+    Neural Machine Translation using Helsinki-NLP/opus-mt-de-en (100% LOCAL).
+    Runs on CPU to consume 0 MB GPU VRAM and immediately purges from RAM.
+    """
+    if not text or not text.strip():
+        return text
+
+    try:
+        from transformers import MarianMTModel, MarianTokenizer
+
+        model_id = 'Helsinki-NLP/opus-mt-de-en'
+        # Run on CPU so GPU VRAM stays 100% free for SDXL models!
+        tokenizer = MarianTokenizer.from_pretrained(model_id)
+        model = MarianMTModel.from_pretrained(model_id).to('cpu')
+
+        inputs = tokenizer(text.strip(), return_tensors='pt', padding=True)
+        with torch.no_grad():
+            outputs = model.generate(**inputs, max_length=256)
+        translated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        # STRICT CLEANUP: purge model immediately!
+        del model
+        del tokenizer
+        del inputs
+        del outputs
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        return translated.strip()
+
+    except Exception as e:
+        print(f"[Aether Prompt-Magier] Neural translation fallback to dictionary: {e}")
+        return dictionary_fallback_translate(text)
+
+
+def expand_prompt_creative(english_prompt: str) -> str:
+    """
+    Uses local Fooocus GPT-2 prompt expansion engine or curated visual tags to enrich the prompt.
+    """
+    if not english_prompt or not english_prompt.strip():
+        return english_prompt
+    
+    # Try using FooocusExpansion if already initialized in default_pipeline
+    try:
+        if pipeline.final_expansion is not None:
+            expanded = pipeline.final_expansion(english_prompt, 42)
+            if expanded and len(expanded) > len(english_prompt):
+                return f"{english_prompt}, {expanded}"
+    except Exception:
+        pass
+
+    # High-grade artistic enrichment fallback
+    lower = english_prompt.lower()
+    additions = [kw for kw in PROMPT_EXPANSION_KEYWORDS if kw not in lower]
+    if additions:
+        return f"{english_prompt}, {', '.join(additions[:4])}"
+    return english_prompt
+
+
+def translate_and_enhance_prompt(prompt: str, mode: str = "neural_auto") -> str:
+    """
+    Main entry point for translation & prompt creation.
     Modes:
-    - 'auto': Translate German words & add quality enhancement tags.
-    - 'enhance': Keep original text and add quality enhancement tags.
-    - 'translate_only': Translate German words without extra tags.
+    - 'neural_auto': Neural KI-Übersetzung + Qualitäts-Boost (Beleuchtung & Schärfe).
+    - 'neural_expand': Neural KI-Übersetzung + KI-Prompt-Ersteller (dichtet Details dazu).
+    - 'neural_translate_only': Reine neuronale KI-Übersetzung ins Englische (ohne Zusätze).
+    - 'enhance_only': Behält bestehenden Text bei und fügt nur Qualitäts-Tags hinzu.
     """
     if not prompt or not prompt.strip():
         return prompt
 
     cleaned = prompt.strip()
 
-    # Step 1: Translate German terms if in 'auto' or 'translate_only'
-    if mode in ("auto", "translate_only"):
-        # Replace longer phrases first, then single words
-        sorted_dict = sorted(DE_EN_DICT.items(), key=lambda x: len(x[0]), reverse=True)
-        for de_term, en_term in sorted_dict:
-            pattern = re.compile(rf'\b{re.escape(de_term)}\b', re.IGNORECASE)
-            cleaned = pattern.sub(en_term, cleaned)
+    # Step 1: Translation
+    if mode in ("neural_auto", "neural_expand", "neural_translate_only"):
+        english_text = neural_translate_de_to_en(cleaned)
+    else:
+        english_text = cleaned
 
-    # Step 2: Quality Enhancement
-    if mode in ("auto", "enhance"):
-        # Check existing quality keywords to prevent duplicate pollution
-        lower_prompt = cleaned.lower()
-        additions = []
-        for mod in QUALITY_MODIFIERS:
-            if mod.lower() not in lower_prompt:
-                additions.append(mod)
-
-        # Append top 4 quality modifiers
+    # Step 2: Prompt Enhancement
+    if mode == "neural_expand":
+        return expand_prompt_creative(english_text)
+    elif mode in ("neural_auto", "enhance_only"):
+        lower = english_text.lower()
+        additions = [kw for kw in PROMPT_EXPANSION_KEYWORDS[:4] if kw not in lower]
         if additions:
-            selected_additions = additions[:4]
-            cleaned = f"{cleaned}, {', '.join(selected_additions)}"
+            return f"{english_text}, {', '.join(additions)}"
+        return english_text
+    elif mode == "neural_translate_only":
+        return english_text
 
-    return cleaned
+    return english_text
