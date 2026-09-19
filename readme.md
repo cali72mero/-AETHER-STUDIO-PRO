@@ -1,52 +1,77 @@
-# 🌌 Aether Diffusion Studio Pro 2.6 • Next-Gen Neural AI
+# 🌌 Aether Diffusion Studio Pro 2.6 (Beta)
+
+<div align="center">
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Base: Fooocus](https://img.shields.io/badge/Based%20on-Fooocus-orange.svg)](https://github.com/lllyasviel/Fooocus)
-[![Version: v2.6](https://img.shields.io/badge/Version-2.6.0-cyan.svg)](#features)
-[![UI: Dark Obsidian](https://img.shields.io/badge/UI-Dark%20Obsidian%20Glass-purple.svg)](#ui-redesign)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta%20v2.6-yellow.svg)](#-status--community-feedback)
+[![Developer: Solo Project](https://img.shields.io/badge/Developer-Solo%20Dev-purple.svg)](#-uber-das-projekt--about-the-project)
+[![UI: Dark Obsidian](https://img.shields.io/badge/UI-Dark%20Obsidian%20Glass-cyan.svg)](#-features--unterschiede-zu-fooocus)
 
-**Aether Diffusion Studio Pro** ist eine hochmoderne, erweiterte Next-Gen Bildgenerierungsplattform, entwickelt auf Basis des legendären Open-Source-Projekts **Fooocus**.
+**[🇩🇪 Deutsch](#-deutsche-dokumentation)** &nbsp;|&nbsp; **[🇬🇧 English](#-english-documentation)**
 
-Das System kombiniert die Benutzerfreundlichkeit von Fooocus mit hochentwickelten Enterprise- und Power-User-Features: **Dual-Engine VRAM Management**, **intelligentes RAM-Offloading**, **Echtzeit Stop-/Pause-Reaktionszeiten**, **integrierter Modell- & VRAM-Rechner**, **3D/Anime Master Prompter** und ein komplett neu gestaltetes **Dark Obsidian Cyber-Design**.
+</div>
 
 ---
 
-## 📜 Lizenz & Urheberrechtshinweis (Attribution & Compliance)
+# 🇩🇪 Deutsche Dokumentation
+
+## 🌌 Über das Projekt & Entwickler-Hinweis
+
+**Aether Diffusion Studio Pro** ist eine eigenständige Weiterentwicklung des beliebten Open-Source-Tools **Fooocus**. 
+
+> [!NOTE]
+> Dieses Projekt wird von einem **einzelnen, unabhängigen Entwickler** mit viel Leidenschaft aufgebaut und weiterentwickelt. Das Projekt befindet sich aktuell in der **Beta-Phase (v2.6 Beta)**.
+
+---
+
+## 💡 Feedback, Fehler melden & Feature-Wünsche
+
+Da dieses Tool aktiv weiterentwickelt wird, ist deine Meinung und Unterstützung extrem wertvoll:
+- 🐛 **Fehler gefunden?** Bitte erstelle ein Issue auf GitHub oder melde Bugs mit einer kurzen Beschreibung deines Setups.
+- 💡 **Ideen für neue Funktionen?** Du hast eine Idee, was Aether Studio noch können sollte (neue Sampler, UI-Ideen, Modellunterstützungen etc.)? Schreib es gerne in das Feedback – ich werde mein Bestes tun, um sinnvolle Vorschläge in kommenden Versionen einzubauen!
+
+---
+
+## 📜 Lizenz & Urheberrecht (GPL-3.0 Compliance)
 
 > [!IMPORTANT]
-> **Aether Diffusion Studio Pro** basiert auf dem Open-Source-Projekt **[Fooocus](https://github.com/lllyasviel/Fooocus)**, ursprünglich entwickelt von **lllyasviel** und weitergeführt von **mashb1t**.
+> **Aether Diffusion Studio Pro** basiert auf dem Code von **[Fooocus](https://github.com/lllyasviel/Fooocus)** (entwickelt von **lllyasviel** und gepflegt von **mashb1t**). 
 > 
-> Gemäß den Bestimmungen der **GNU General Public License v3.0 (GPLv3)** steht auch Aether Diffusion Studio Pro vollständig unter der **GPLv3**. Alle Urheberrechte der ursprünglichen Autoren von Fooocus, PyTorch, Gradio und ComfyUI-Komponenten bleiben vollumfänglich gewahrt. Die Original-Lizenzdatei [LICENSE](LICENSE) ist unverändert im Repository enthalten.
+> Das Projekt steht gemäß der **GNU General Public License v3.0 (GPLv3)** vollständig als freie Open-Source-Software zur Verfügung. Sämtliche Urheberrechte der ursprünglichen Entwickler von Fooocus, PyTorch, Gradio und ldm_patched bleiben vollumfänglich gewahrt. Die originale Lizenzdatei [LICENSE](LICENSE) ist unverändert enthalten.
 
 ---
 
-## 🚀 Was kann Aether Studio Pro, was Fooocus noch nicht konnte?
+## 🚀 Was kann Aether Studio Pro mehr als das normale Fooocus?
 
-| Feature | Standard Fooocus | Aether Diffusion Studio Pro 2.6 |
+Hier ist die Übersicht aller Neuerungen und Erweiterungen im Vergleich zur Basis-Version von Fooocus:
+
+| Funktion | Normales Fooocus | 🌌 Aether Diffusion Studio Pro 2.6 (Beta) |
 | :--- | :--- | :--- |
-| **🎨 Benutzeroberfläche** | Helles Standard-Gradio Design | **Dark Obsidian Glassmorphism**: High-End Cyberpunk Dark UI, leuchtende Akzente, Live-Status-Badges und kompakte Menüs |
-| **⚡ VRAM-Steuerung** | Nur über Konsolen-Flags (`--lowvram`) beim Start | **Dynamischer Dual-Engine Switch**: Umschalten zwischen *VRAM-Sparmodus (Eco)* und *Max-Speed Normalmodus* direkt in der WebUI im laufenden Betrieb mit Live-Badge |
-| **🧠 Speicher-Überlauf (OOM)** | CUDA Out-of-Memory Absturz bei zu großen Modellen | **Smart RAM Offloading**: Erkennt GPU-Engpässe und lagert überzählige Schichten dynamisch in den System-RAM (bis 32 GB) aus – kein Absturz mehr! |
-| **⏱️ Reaktionszeit Stop/Pause** | Wartet oft mehrere Sekunden bis zum Ende des aktuellen Steps | **Instant Millisecond Controls**: Sofortiger Abbruch und unterbrechungsfreie Pause-Funktion ohne Verzögerung |
-| **🧬 Modell-Unterstützung** | Fast ausschließlich auf SDXL beschränkt | **Universal Model Architecture (`models/all_models_sdxl_flux/`)**: Zentraler Ordner für SDXL, Turbo, SD 1.5 und Flux-Checkpoints mit automatischer Erkennung |
-| **📊 VRAM & Hardware-Rechner** | Nicht vorhanden | **Integrierter Modell-Rechner**: Berechnet anhand von Modellname oder Civitai-Link exakt benötigten VRAM und prüft Hardware-Kompatibilität |
-| **🎨 Prompting-Assistenz** | Nur generische Styles | **3D Master & Anime Prompt Guide**: Spezialisierte Prompt-Builder und 1-Klick Preset-Injektion für fotorealistische 3D-Renders und Anime |
-| **📖 Performance-Erklärung** | Nur Radio-Buttons ohne Erklärung | **Interaktives Performance-Akkordeon**: Detaillierte Tabelle über Quality (60 St.), Speed (30 St.), Turbo (6 St.), Lightning (4 St.), Hyper-SD und LCM |
+| **🎨 Benutzeroberfläche** | Helles, simples Standard-Design | **Dark Obsidian Glassmorphism**: Hochmodernes Dark-UI mit tiefem Schwarz, subtilen Glass-Effekten, Neon-Akzenten und Live-Status-Header |
+| **⚡ VRAM-Verwaltung** | Feste Einstellung nur über Start-Flags (`--lowvram`) | **Dual-Engine VRAM Switch**: Direkt in der WebUI im laufenden Betrieb zwischen *🌱 VRAM-Sparmodus (Eco)* und *🚀 Normalmodus (Max GPU)* umschalten |
+| **🧠 RAM-Schutz (OOM)** | Programm stürzt bei Speicherüberlauf (CUDA OOM) ab | **Smart RAM Offload**: Wenn der VRAM der GPU (z. B. 6 GB) voll ist, lagert das System Schichten dynamisch in den System-RAM (bis 32 GB) aus |
+| **⏱️ Stop & Pause** | Braucht oft Sekunden bis zum Ende eines Denoising-Steps | **Instant Millisecond Controls**: Nahezu verzögerungsfreies Abbrechen und Pausieren direkt im Iterationszyklus |
+| **🧬 Modell-Unterstützung** | Nahezu ausschließlich auf Standard-SDXL fokussiert | **Universeller Modellordner (`all_models_sdxl_flux/`)**: Zentraler Checkpoint-Ordner für SDXL, Turbo, SD 1.5 und Flux-Modelle mit automatischer Erkennung |
+| **📊 Modell- & VRAM-Rechner** | Nicht vorhanden | **Integrierter VRAM-Checker**: Berechnet per Modellname oder Civitai-Link exakt den VRAM-Bedarf und prüft die Hardware-Tauglichkeit |
+| **🎨 Prompting-Assistenz** | Nur generische Styles | **3D Master & Anime Prompt Guide**: Spezialisierter Generator mit 1-Klick-Injektion für fotorealistische 3D-Renders & detailreiche Anime-Motive |
+| **📖 Performance-Erklärung** | Nur Radio-Buttons ohne Erklärung | **Interaktives Erklärungs-Menü**: Detaillierte Tabelle über Quality (60 Steps), Speed (30), Turbo (6), Lightning (4), Hyper-SD und LCM |
 | **💾 Bild-Verlauf & Export** | Manuelles Suchen im Ausgabeordner | **Quick-History & 1-Klick Download**: Generierte Bilder sofort mit einem Klick in den System-Download-Ordner exportieren |
-| **🛠️ Bugfixes & Stabilität** | Bekannte Tensor-Mismatches bei Low-VRAM | **Low-VRAM Fix**: HuggingFace CLIP Tensor-Mismatch auf CUDA behoben; robuster Parser für alle Bildformate (`×`, `*`, `x`) |
+| **🛠️ Low-VRAM Bugfix** | Absturz `RuntimeError: Expected all tensors on same device` | **Gefixt**: HuggingFace CLIP Text-Encoder Embeddings werden im Sparmodus synchron auf CUDA gehalten |
+| **📐 Aspect Ratio Bugfix** | Absturz bei Asterisk-Format (`ValueError: not enough values to unpack`) | **Gefixt**: Universeller Regex-Parser für Formate mit `×`, `*` oder `x` |
 
 ---
 
 ## 💻 Systemanforderungen
 
-- **Betriebssystem**: Linux (Arch, CachyOS, Ubuntu, Debian, Fedora) / Windows 10/11
-- **GPU**: NVIDIA Grafikkarte mit mindestens 4–6 GB VRAM (z. B. RTX 3050, GTX 1660, RTX 2060, RTX 3060, RTX 40-Serie)
-- **RAM**: 16 GB empfohlen (32 GB für Smart RAM Offload bei sehr großen Modellen)
-- **Python**: Python 3.10 mit PyTorch 2.1+ und CUDA-Unterstützung
+- **Betriebssystem**: Linux (Arch, CachyOS, Ubuntu, Debian, etc.) oder Windows 10/11
+- **Grafikkarte (GPU)**: NVIDIA RTX/GTX mit mind. 4 GB – 6 GB VRAM (z. B. RTX 3050, 2060, 3060, 40-Serie)
+- **Arbeitsspeicher (RAM)**: 16 GB empfohlen (32 GB für Smart RAM Offload bei großen Modellen)
+- **Software**: Python 3.10 mit PyTorch 2.1+ und CUDA-Treiber
 
 ---
 
-## 🛠️ Schnellstart & Ausführung
+## 🛠️ Schnellstart
 
 ### 1. Repository klonen
 ```bash
@@ -56,34 +81,106 @@ cd -AETHER-STUDIO-PRO
 
 ### 2. Starten
 
-**Normaler High-Speed Modus:**
+**Im Standard-Modus (Maximale GPU-Geschwindigkeit):**
 ```bash
 ./venv/bin/python entry_with_update.py
 ```
 
-**Direkt im VRAM-Sparmodus (für 4GB - 6GB GPUs):**
+**Im VRAM-Sparmodus (für 4 GB – 6 GB Grafikkarten empfohlen):**
 ```bash
 ./venv/bin/python entry_with_update.py --lowvram
 # oder:
 ./run_lowvram.sh
 ```
 
-Öffne anschließend die Web-Oberfläche in deinem Browser unter:
-`http://127.0.0.1:7865`
+Öffne im Browser: `http://127.0.0.1:7865`
+
+---
+---
+
+# 🇬🇧 English Documentation
+
+## 🌌 About the Project & Developer Note
+
+**Aether Diffusion Studio Pro** is an advanced evolution of the acclaimed open-source AI image generation platform **Fooocus**.
+
+> [!NOTE]
+> This software is independently developed and maintained by a **single solo developer**. It is currently in active **Beta phase (v2.6 Beta)**.
 
 ---
 
-## 📁 Ordner-Struktur für Modelle
+## 💡 Feedback, Bug Reports & Feature Requests
 
-- `models/checkpoints/` : Standard-Checkpoints (SDXL, SD 1.5)
-- `models/all_models_sdxl_flux/` : Erweiterte Modelle, Turbo-Modelle und experimentelle Checkpoints
-- `models/loras/` : LoRA-Dateien (z. B. SDXL-Offset, LCM, Lightning, Hyper-SD)
-- `models/vae/` : Optionale VAE-Dateien
+Community feedback is essential to making Aether Studio the best it can be:
+- 🐛 **Found a bug?** Please submit an issue on GitHub with a brief description of your operating system, GPU, and error log.
+- 💡 **Feature Ideas?** Have an idea for new workflows, models, or UI features? Share your thoughts – I will gladly review all feedback and try my best to implement community suggestions in upcoming releases!
 
 ---
 
-## 🌟 Danksagung & Credits
-- **Fooocus Core**: [lllyasviel](https://github.com/lllyasviel) & [mashb1t](https://github.com/mashb1t)
-- **SDXL**: [Stability AI](https://stability.ai)
-- **ComfyUI / ldm_patched**: [comfyanonymous](https://github.com/comfyanonymous)
-- **Gradio**: [Gradio Team](https://gradio.app)
+## 📜 License & Compliance (GPL-3.0)
+
+> [!IMPORTANT]
+> **Aether Diffusion Studio Pro** is built on top of **[Fooocus](https://github.com/lllyasviel/Fooocus)** (originally created by **lllyasviel** and maintained by **mashb1t**).
+>
+> In accordance with the **GNU General Public License v3.0 (GPLv3)**, this software remains 100% free and open-source. All intellectual property and copyright rights of the original Fooocus, PyTorch, Gradio, and ldm_patched contributors are fully preserved. The original [LICENSE](LICENSE) is included without alterations.
+
+---
+
+## 🚀 Key Enhancements (Aether Studio Pro vs. Standard Fooocus)
+
+| Feature | Standard Fooocus | 🌌 Aether Diffusion Studio Pro 2.6 (Beta) |
+| :--- | :--- | :--- |
+| **🎨 User Interface** | Light standard Gradio theme | **Dark Obsidian Glassmorphism**: Cyber-dark aesthetics, glowing indicators, responsive controls, and dynamic status header |
+| **⚡ VRAM Architecture** | Fixed at launch via CLI flags (`--lowvram`) | **Dynamic Dual-Engine VRAM Switch**: Seamlessly toggle between *🌱 Eco / Low-VRAM* and *🚀 Normal / Max Speed* directly inside the WebUI |
+| **🧠 Memory Safety (OOM)** | Crashes with CUDA Out-Of-Memory when models exceed VRAM | **Smart RAM Offloading**: Dynamically offloads excess tensor layers to system RAM (up to 32 GB) to prevent OOM crashes |
+| **⏱️ Stop & Pause Latency** | Often waits seconds until the full step completes | **Instant Millisecond Controls**: Near-zero latency abort and pause hooks built into the inner diffusion loop |
+| **🧬 Model Compatibility** | Primarily constrained to SDXL checkpoints | **Universal Model Architecture (`all_models_sdxl_flux/`)**: Centralized directory supporting SDXL, Turbo, SD 1.5, and Flux models |
+| **📊 Hardware Calculator** | None | **Integrated Model & VRAM Calculator**: Predicts exact VRAM requirements and hardware compatibility from model names or Civitai links |
+| **🎨 Prompt Engineering** | Basic style selection | **3D Master & Anime Prompt Guide**: Dedicated prompt builder with 1-click preset injection for photorealistic 3D and anime artwork |
+| **📖 Performance Guide** | Simple radio buttons without explanation | **Interactive Performance Accordion**: Full breakdown of Quality (60 steps), Speed (30), Turbo (6), Lightning (4), Hyper-SD, and LCM |
+| **💾 History & Quick Export** | Manual browsing in outputs directory | **Quick-History & 1-Click Download**: Instantly export generated images into your system Downloads folder |
+| **🛠️ Low-VRAM Bugfix** | `RuntimeError: Expected all tensors on same device` | **Resolved**: Synchronized HuggingFace CLIP embeddings and position IDs on CUDA devices during offloading |
+| **📐 Aspect Ratio Parser** | Crashes on asterisk format (`ValueError: not enough values to unpack`) | **Resolved**: Resilient regex parser supporting `×`, `*`, and `x` delimiters |
+
+---
+
+## 💻 System Requirements
+
+- **Operating System**: Linux (Arch, CachyOS, Ubuntu, Debian, Fedora, etc.) or Windows 10/11
+- **GPU**: NVIDIA Graphics Card with 4 GB – 6 GB+ VRAM (e.g. RTX 3050, 2060, 3060, 40-series)
+- **System Memory (RAM)**: 16 GB minimum (32 GB recommended for Smart RAM Offloading on massive checkpoints)
+- **Dependencies**: Python 3.10, PyTorch 2.1+, CUDA Toolkit
+
+---
+
+## 🛠️ Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/cali72mero/-AETHER-STUDIO-PRO.git
+cd -AETHER-STUDIO-PRO
+```
+
+### 2. Launching
+
+**Standard Mode (Full GPU Acceleration):**
+```bash
+./venv/bin/python entry_with_update.py
+```
+
+**Low-VRAM / Eco Mode (Recommended for 4 GB – 6 GB GPUs):**
+```bash
+./venv/bin/python entry_with_update.py --lowvram
+# or:
+./run_lowvram.sh
+```
+
+Access the studio in your browser at: `http://127.0.0.1:7865`
+
+---
+
+## 🌟 Acknowledgements & Credits
+- **Fooocus Core Engine**: [lllyasviel](https://github.com/lllyasviel) & [mashb1t](https://github.com/mashb1t)
+- **Stable Diffusion XL**: [Stability AI](https://stability.ai)
+- **ComfyUI Architecture**: [comfyanonymous](https://github.com/comfyanonymous)
+- **Gradio Framework**: [Gradio Team](https://gradio.app)
