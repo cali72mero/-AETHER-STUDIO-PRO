@@ -27,6 +27,10 @@ import glob
 import modules.history_manager as history_manager
 import modules.prompt_guide as prompt_guide
 import modules.model_checker as model_checker
+import modules.civitai_downloader as civitai_downloader
+import modules.prompt_magier as prompt_magier
+import modules.comparison_slider as comparison_slider
+from PIL import Image
 
 def get_task(*args):
     args = list(args)
@@ -234,6 +238,9 @@ with shared.gradio_root:
                 with gr.Column(scale=17):
                     prompt = gr.Textbox(show_label=False, placeholder="Prompt hier eingeben oder Bildbeschreibung verfassen...", elem_id='positive_prompt',
                                         autofocus=True, lines=3)
+
+                    with gr.Row(elem_classes=['prompt_magier_row'], visible=False) as prompt_magier_row:
+                        prompt_magier_btn = gr.Button(value="✨ Prompt verzaubern (Deutsch ➔ Magisches Englisch)", variant="secondary", elem_classes=['prompt_magier_btn'], scale=1)
 
                     default_prompt = modules.config.default_prompt
                     if isinstance(default_prompt, str) and default_prompt != '':
@@ -454,6 +461,45 @@ with shared.gradio_root:
                         metadata_input_image.upload(trigger_metadata_preview, inputs=metadata_input_image,
                                                     outputs=metadata_json, queue=False, show_progress=True)
 
+                    with gr.Tab(label='🎚️ Vorher/Nachher Vergleich', id='comparison_tab') as comparison_tab:
+                        with gr.Row():
+                            with gr.Column(scale=1):
+                                comp_before_img = grh.Image(label='1. Bild Vorher (Original)', source='upload', type='pil')
+                                comp_after_img = grh.Image(label='2. Bild Nachher (Bearbeitet)', source='upload', type='pil')
+                                with gr.Row():
+                                    comp_update_btn = gr.Button('🔄 Slider aktualisieren', variant='primary')
+                                    comp_load_uov_btn = gr.Button('📥 Von Upscale/Vary übernehmen', variant='secondary')
+                            with gr.Column(scale=2):
+                                comp_html_viewer = gr.HTML(value=comparison_slider.generate_comparison_html(None, None))
+
+                        def on_comp_update(b, a):
+                            return comparison_slider.generate_comparison_html(b, a)
+
+                        def on_comp_load_uov(uov_img, gal):
+                            after_img = None
+                            if gal and len(gal) > 0:
+                                try:
+                                    first_item = gal[0]
+                                    if isinstance(first_item, dict) and 'name' in first_item:
+                                        after_img = Image.open(first_item['name'])
+                                    elif isinstance(first_item, str):
+                                        after_img = Image.open(first_item)
+                                except Exception:
+                                    pass
+                            before_pil = None
+                            if uov_img is not None:
+                                try:
+                                    before_pil = Image.fromarray(uov_img) if not isinstance(uov_img, Image.Image) else uov_img
+                                except Exception:
+                                    before_pil = None
+                            html = comparison_slider.generate_comparison_html(before_pil, after_img)
+                            return before_pil, after_img, html
+
+                        comp_update_btn.click(on_comp_update, inputs=[comp_before_img, comp_after_img], outputs=comp_html_viewer, queue=False)
+                        comp_before_img.change(on_comp_update, inputs=[comp_before_img, comp_after_img], outputs=comp_html_viewer, queue=False)
+                        comp_after_img.change(on_comp_update, inputs=[comp_before_img, comp_after_img], outputs=comp_html_viewer, queue=False)
+                        comp_load_uov_btn.click(on_comp_load_uov, inputs=[uov_input_image, gallery], outputs=[comp_before_img, comp_after_img, comp_html_viewer], queue=False)
+
             with gr.Row(visible=modules.config.default_enhance_checkbox) as enhance_input_panel:
                 with gr.Tabs():
                     with gr.Tab(label='Upscale or Variation'):
@@ -653,6 +699,31 @@ with shared.gradio_root:
                         return render_header_bar(is_eco), render_vram_info(is_eco)
 
                     vram_mode_radio.change(on_vram_mode_change, inputs=[vram_mode_radio], outputs=[header_bar_html, vram_mode_info], queue=False)
+
+                with gr.Accordion(label='🔮 Prompt-Magier & Übersetzer Einstellungen', open=False):
+                    enable_prompt_magier = gr.Checkbox(
+                        label='✨ Prompt-Magier & Deutsch-Übersetzer aktivieren',
+                        value=False,
+                        info='Schaltet einen Schnell-Button unter dem Prompt frei, um deutsche Prompts automatisch ins Englische zu übersetzen und mit Detail- und Qualitäts-Tags zu optimieren.'
+                    )
+                    prompt_magier_mode = gr.Radio(
+                        label='Magier-Modus',
+                        choices=['Auto (Deutsch ➔ Englisch + Detail-Boost)', 'Nur Übersetzen (ohne extra Tags)', 'Nur Qualitäts-Boost (Englisch beibehalten)'],
+                        value='Auto (Deutsch ➔ Englisch + Detail-Boost)'
+                    )
+
+                    enable_prompt_magier.change(lambda en: gr.update(visible=en), inputs=enable_prompt_magier, outputs=prompt_magier_row, queue=False)
+
+                    def on_prompt_magier_click(current_prompt, mode_choice):
+                        mode_map = {
+                            'Auto (Deutsch ➔ Englisch + Detail-Boost)': 'auto',
+                            'Nur Übersetzen (ohne extra Tags)': 'translate_only',
+                            'Nur Qualitäts-Boost (Englisch beibehalten)': 'enhance'
+                        }
+                        mode = mode_map.get(mode_choice, 'auto')
+                        return prompt_magier.translate_and_enhance_prompt(current_prompt, mode=mode)
+
+                    prompt_magier_btn.click(on_prompt_magier_click, inputs=[prompt, prompt_magier_mode], outputs=prompt, queue=False)
 
                 performance_selection = gr.Radio(label='Performance',
                                                  choices=flags.Performance.values(),
@@ -866,6 +937,94 @@ with shared.gradio_root:
 | **FLUX.1 [dev] FP8 / GGUF** | 1024x1024 | 20 | ~6 GB VRAM + 24GB RAM | 🟡 Ja, dank deinen **32 GB RAM**! |
 | **FLUX.1 [dev] FP16** | 1024x1024 | 20 | 24 GB VRAM | 🔴 Nein (nur FP8/GGUF empfohlen) |
 """)
+
+            with gr.Tab(label='📥 Civitai Downloader (Beta)'):
+                gr.HTML("""
+                <div class="civitai-beta-warning" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.45); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <span style="font-size: 20px;">⚠️</span>
+                        <h4 style="color: #f87171; margin: 0; font-size: 15px; font-weight: 700;">ACHTUNG: EXPERIMENTELLE BETA-FUNKTION!</h4>
+                    </div>
+                    <p style="color: #fca5a5; margin: 0; font-size: 13px; line-height: 1.5;">
+                        Dieser integrierte Civitai-Downloader ist ein <b>Beta-Feature</b>. Bei großen Dateien (z. B. 6 GB Checkpoints) oder instabiler Internetverbindung kann es zu Timeouts oder Netzwerkabbrüchen kommen.<br>
+                        <b>💡 Empfehlung:</b> Bei sehr großen Modellen wird empfohlen, die Dateien regulär im Webbrowser herunterzuladen und in den jeweiligen Modell-Ordner zu legen.
+                    </p>
+                </div>
+                """)
+
+                with gr.Group():
+                    with gr.Row():
+                        civitai_input = gr.Textbox(
+                            label='Civitai Modell-URL oder Version-ID',
+                            placeholder='z.B. https://civitai.com/models/123456 oder https://civitai.com/models/123456?modelVersionId=78910',
+                            scale=4
+                        )
+                        civitai_api_key = gr.Textbox(
+                            label='Civitai API-Key (Optional)',
+                            placeholder='Nur nötig für geschützte Modelle mit Login-Pflicht',
+                            type='password',
+                            scale=2
+                        )
+                    
+                    with gr.Row():
+                        civitai_inspect_btn = gr.Button('🔍 1. Modell-Details prüfen', variant='secondary', scale=1)
+                        civitai_dl_btn = gr.Button('⬇️ 2. Modell jetzt herunterladen', variant='primary', elem_classes=['comfy-quick-download-btn'], scale=1)
+
+                civitai_cached_info = gr.State({})
+                civitai_info_box = gr.Markdown(value="*Gib oben eine Civitai-URL ein und klicke auf '1. Modell-Details prüfen'.*")
+                civitai_status_box = gr.Markdown(value="")
+
+                def on_civitai_inspect(url_or_id, api_key):
+                    if not url_or_id or not url_or_id.strip():
+                        return {}, "*Bitte gib zuerst eine Civitai-URL oder Modell-ID ein.*", ""
+                    data = civitai_downloader.fetch_civitai_metadata(url_or_id, api_key=api_key)
+                    if "error" in data:
+                        return {}, f"❌ **Fehler:** {data['error']}", ""
+                    
+                    md = f"""
+### 📦 Gefundenes Modell: **{data['model_name']}**
+- **Version:** `{data['version_name']}`
+- **Modell-Typ:** `{data['model_type']}` (Basis: `{data['base_model']}`)
+- **Dateiname:** `{data['filename']}`
+- **Größe:** **{data['size_gb']} GB**
+- **Zielordner:** `{data['target_dir']}`
+                    """
+                    return data, md, "✅ Modell gefunden! Klicke jetzt auf **'2. Modell jetzt herunterladen'**."
+
+                def on_civitai_download(cached_data, api_key):
+                    if not cached_data or not cached_data.get("success"):
+                        return "❌ **Fehler:** Bitte prüfe zuerst das Modell mit '1. Modell-Details prüfen', bevor du den Download startest."
+                    
+                    dl_url = cached_data["download_url"]
+                    target_dir = cached_data["target_dir"]
+                    filename = cached_data["filename"]
+                    target_filepath = os.path.join(target_dir, filename)
+
+                    if os.path.exists(target_filepath):
+                        return f"ℹ️ **Datei existiert bereits:** `{filename}` in `{target_dir}`!"
+
+                    success, msg = civitai_downloader.download_file_stream(
+                        download_url=dl_url,
+                        target_filepath=target_filepath,
+                        api_key=api_key
+                    )
+                    if success:
+                        modules.config.update_files()
+                        return f"🎉 **Fertig:** {msg}\n\n*Das Modell steht nun sofort in deinen Checkpoints / LoRAs zur Verfügung!*"
+                    else:
+                        return f"❌ **Fehler beim Download:** {msg}"
+
+                civitai_inspect_btn.click(
+                    on_civitai_inspect,
+                    inputs=[civitai_input, civitai_api_key],
+                    outputs=[civitai_cached_info, civitai_info_box, civitai_status_box],
+                    queue=False
+                )
+                civitai_dl_btn.click(
+                    on_civitai_download,
+                    inputs=[civitai_cached_info, civitai_api_key],
+                    outputs=[civitai_status_box]
+                )
 
             with gr.Tab(label='Advanced'):
                 guidance_scale = gr.Slider(label='Guidance Scale', minimum=1.0, maximum=30.0, step=0.01,
