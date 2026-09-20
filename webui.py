@@ -464,10 +464,11 @@ with shared.gradio_root:
                                 with gr.Accordion("🎯 Gezielte Attribut-Ersetzung im bestehenden Prompt", open=True):
                                     gr.Markdown("*(Tauscht gezielt nur ein bestimmtes Attribut aus dem Bild in deinem aktuellen Prompt aus, z. B. nur die Kleidung oder Haarfarbe)*")
                                     with gr.Row():
+                                        vision_replace_pose_btn = gr.Button('🧘 Nur Haltung & Pose übertragen')
                                         vision_replace_clothing_btn = gr.Button('👗 Nur Kleidung übertragen')
                                         vision_replace_hair_btn = gr.Button('💇 Nur Haare & Gesicht übertragen')
                                     with gr.Row():
-                                        vision_replace_bg_btn = gr.Button('🏞️ Nur Hintergrund übertragen')
+                                        vision_replace_bg_btn = gr.Button('🏞️ Nur Hintergrund & Möbel übertragen')
                                         vision_replace_lighting_btn = gr.Button('💡 Nur Licht übertragen')
                                         vision_replace_style_btn = gr.Button('🎨 Nur Stil übertragen')
 
@@ -1774,6 +1775,14 @@ with shared.gradio_root:
         vision_apply_append_btn.click(
             trigger_vision_apply_append,
             inputs=[prompt, vision_result_prompt],
+            outputs=[prompt],
+            show_progress=False,
+            queue=False
+        )
+
+        vision_replace_pose_btn.click(
+            lambda p, s: trigger_vision_replace_category(p, s, 'subject_pose'),
+            inputs=[prompt, vision_state_data],
             outputs=[prompt],
             show_progress=False,
             queue=False

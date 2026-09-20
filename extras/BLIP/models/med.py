@@ -80,6 +80,8 @@ class BertEmbeddings(nn.Module):
 
         if position_ids is None:
             position_ids = self.position_ids[:, past_key_values_length : seq_length + past_key_values_length]
+        if position_ids.device != self.position_embeddings.weight.device:
+            position_ids = position_ids.to(self.position_embeddings.weight.device)
 
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
