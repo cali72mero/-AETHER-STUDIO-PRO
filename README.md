@@ -30,34 +30,45 @@
 **Aether Diffusion Studio Pro** is an advanced, high-performance evolution of the popular open-source AI image generation software **Fooocus**.
 
 > [!NOTE]
-> This software is independently developed and maintained by a **single solo developer**. The software is currently in active **Beta phase (v2.7.0 Beta)**.
+> This software is independently developed and maintained by a **single solo developer**. The software is currently in active **Beta phase (v2.7.1 Beta)**.
 > 
 > Because this is a continuous development process, community feedback is invaluable! If you encounter any bugs, unexpected behavior, or have ideas for exciting new features (models, workflows, UI improvements), please open an Issue on GitHub or join the discussions. I read every report and actively integrate user suggestions into new releases!
 
 ---
 
-## 🔄 Version Evolution: Fooocus ➔ v2.5 ➔ v2.6 ➔ v2.6.1 ➔ v2.6.2 ➔ v2.6.3 ➔ v2.7.0
+## 🔄 Version Evolution: Fooocus ➔ v2.5 ➔ v2.6 ➔ v2.6.3 ➔ v2.7.0 ➔ v2.7.1
 
-### 🆕 What's New in v2.7.0 (Current Release - Live Face Swap & Avatar Studio, Direct English Prompt Enhancer)
+### 🆕 What's New in v2.7.1 (Current Release - Smartphone Remote Webcam, Instant Splash Launcher & Low-VRAM Speed Boost)
+1. **📱 Wireless Smartphone & Tablet Webcam Integration**:
+   - **No PC Webcam Needed!** Use your iPhone, Android phone, iPad, or secondary tablet as a wireless camera.
+   - Simply scan the on-screen **QR Code** or open `http://<your-wifi-ip>:7865/remote_cam` on your mobile browser.
+   - Protected with auto-generated **PIN & Username** authentication.
+   - Optional **Public Cloud-Tunnel** button for connecting over mobile data (4G/5G).
+   - Your phone streams directly into Fooocus; the AI tracks your expressions and drives your avatar in real time!
+   - Broadcast to **OBS Studio**, **TikTok Live Studio**, and **Discord** using OBS Virtual Camera!
+
+2. **⚡ Instant Browser Loading Screen (No More Waiting in Black Terminal)**:
+   - When launching Fooocus, your browser opens **immediately within 1 second** showing an obsidian dark cyberpunk splash screen.
+   - Animated progress spinner and live status messages (`[1/3] Checking environment`, `[2/3] Initializing models`, `[3/3] Ready`).
+   - Automatically transitions straight into the studio once initialization completes.
+
+3. **🚀 Low-VRAM & RTX 3050 Performance Boost**:
+   - Enabled **Tensor Core TF32 acceleration** and **cuDNN auto-tuner** for Ampere architectures (RTX 30xx series).
+   - Optimized Low-VRAM memory allocation headroom for 6GB GPUs, keeping up to 4.2 GB of weights in VRAM and drastically reducing PCIe RAM swapping bottlenecks.
+
+4. **🐳 Fixed GitHub Actions Container Build**:
+   - Resolved Docker OCI image tag naming conflict on GitHub Actions.
+
+---
+
+### 🌟 What was added in v2.7.0 (Live Face Swap Studio & Direct English Prompt Enhancer)
 1. **🎭 Live Face Swap & Avatar Studio (Beta - 100% Local & OBS Studio Ready)**:
-   - **Realtime Webcam Facial Tracking**: Tracks your face directly in the browser via webcam—measuring eye blinking (eyes open/closed), mouth motion (speaking/opening mouth), and head tilt/roll.
-   - **Avatar Expression Retargeting**: Upload any reference portrait, character, or body image. The AI animates the avatar's eyes, mouth, and head in real time to mimic your facial movements!
-   - **Seamless Face Swapping**: Swap the avatar's face onto your live webcam feed or your face onto the reference avatar.
-   - **Multi-Tier Model Architecture (Small vs. Large GPUs)**:
-     - `⚡ Eco / Fast Mesh-Retarget`: Super-fast real-time retargeting designed specifically for smaller GPUs (RTX 3050 6GB) and CPU with 0 MB lingering VRAM footprint.
-     - `🎨 AI Neural FaceSwap / Expression Transfer`: Rich expression transfer for 6-12 GB GPUs.
-     - `🚀 LivePortrait HD Expression Engine`: Studio-grade animation for 12-16 GB+ GPUs.
-     - **Automatic 1-Click Model Download**: Downloads the standard lightweight ONNX model (`face_detection_yunet.onnx`) automatically on demand.
-     - **Custom Model Directory (`models/live_faceswap/`)**: Drop your own `.onnx` or `.safetensors` models into the folder; they are detected automatically.
-   - **Direct OBS Studio Streaming Integration**:
-     - Plug-and-play OBS Browser Source URL: `http://127.0.0.1:7865/live_avatar`
-     - High-speed MJPEG video stream: `http://127.0.0.1:7865/stream/avatar.mjpg`
-     - Clean embedded step-by-step setup guide in the WebUI.
-   - **Beta Status Notice**: Prominent alert banner signaling that the Live Face Swap Studio is actively evolving.
-
+   - **Realtime Facial Tracking**: Tracks your face via webcam or phone—measuring eye blinking, mouth motion, and head tilt/roll.
+   - **Avatar Expression Retargeting**: Upload any reference portrait or character; the AI animates eyes, mouth, and head in real time!
+   - **Multi-Tier Model Architecture**: Eco / Fast (0 MB VRAM, RTX 3050 & CPU) to LivePortrait HD.
+   - **OBS Studio & Stream Integration**: Browser Source `http://127.0.0.1:7865/live_avatar` and MJPEG `http://127.0.0.1:7865/stream/avatar.mjpg`.
 2. **🪄 Direct English Prompt Enhancer (Without Translation)**:
-   - Added a dedicated button `🪄 Prompt Erweitern (Ohne Übersetzung)` directly in the action row under the prompt.
-   - If your prompt is already in English, enhance and creatively expand it with cinematic detail and quality tags with a single click—without running German-to-English translation!
+   - Button `🪄 Prompt Erweitern (Ohne Übersetzung)` to enrich English prompts without loading the translation model.
 
 ---
 
@@ -120,13 +131,13 @@
 
 ## 🚀 Comparison: Standard Fooocus vs. Aether Studio Pro
 
-| Feature | Standard Fooocus (v2.5) | Aether Studio Pro (v2.6) | Aether Studio Pro (v2.6.3) | 🌌 Aether Studio Pro (v2.7.0) |
+| Feature | Standard Fooocus (v2.5) | Aether Studio Pro (v2.6) | Aether Studio Pro (v2.6.3) | 🌌 Aether Studio Pro (v2.7.1) |
 | :--- | :--- | :--- | :--- | :--- |
-| **🎨 User Interface** | Light standard theme | Dark Obsidian Cyberpunk UI | Dark Obsidian Glassmorphism | **Dark Obsidian Glassmorphism + Live Status & Action Bars** |
-| **⚡ VRAM Control** | CLI flags only (`--lowvram`) | WebUI Dual-Engine Switch | WebUI Dual-Engine Switch | **WebUI Dual-Engine Switch + Live Header Badge** |
+| **🎨 User Interface** | Light standard theme | Dark Obsidian Cyberpunk UI | Dark Obsidian Glassmorphism | **Dark Obsidian Glassmorphism + Instant Browser Splash Screen** |
+| **⚡ VRAM Control** | CLI flags only (`--lowvram`) | WebUI Dual-Engine Switch | WebUI Dual-Engine Switch | **Dual-Engine + Ampere TF32 & 6GB Optimized Headroom Boost** |
 | **🧠 Memory Safety (OOM)**| Crashes on VRAM exhaustion | Smart RAM Offload (32 GB) | Smart RAM Offload (32 GB RAM Safe) | **Smart RAM Offload (32 GB RAM Safe)** |
 | **⏱️ Stop & Pause** | Waits for full step finish | Instant Millisecond Stop | Instant Millisecond Stop & Pause | **Instant Millisecond Stop & Pause** |
-| **🎭 Live Face Swap Studio**| None | None | None | **Live Face Swap & Realtime Avatar Tracking (Webcam, Eyes/Mouth, OBS Studio Stream)** |
+| **🎭 Live Face Swap Studio**| None | None | None | **Live Face Swap & Realtime Avatar (Webcam + Smartphone Wireless, OBS, TikTok, Discord)** |
 | **🔬 Vision AI Studio** | Simple describe button | Standard describe | Precision Vision Studio | **Precision Vision Studio: Beta Banner, Negative Prompt, Res Detection, 7 Filters** |
 | **📐 Aspect Ratios** | Fixed presets only | Fixed presets only | ComfyUI-Style Pixel Sliders | **ComfyUI-Style Custom Pixel Sliders + 1-Click Reference Adoption** |
 | **🌐 Neural Translation** | None | Dictionary Matrix | Local Neural MarianMT (0 MB VRAM) | **Local Neural MarianMT (CPU, 0 MB VRAM, Instant Purge)** |

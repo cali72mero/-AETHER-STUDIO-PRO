@@ -1,0 +1,965 @@
+/* based on https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/v1.6.0/style.css */
+
+.loader-container {
+  display: flex; /* Use flex to align items horizontally */
+  align-items: center; /* Center items vertically within the container */
+  white-space: nowrap; /* Prevent line breaks within the container */
+}
+
+.loader {
+  border: 8px solid #f3f3f3; /* Light grey */
+  border-top: 8px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Style the progress bar */
+progress {
+  appearance: none; /* Remove default styling */
+  height: 20px; /* Set the height of the progress bar */
+  border-radius: 5px; /* Round the corners of the progress bar */
+  background-color: #f3f3f3; /* Light grey background */
+  width: 100%;
+  vertical-align: middle !important;
+}
+
+/* Style the progress bar container */
+.progress-container {
+  margin-left: 20px;
+  margin-right: 20px;
+  flex-grow: 1; /* Allow the progress container to take up remaining space */
+}
+
+/* Set the color of the progress bar fill */
+progress::-webkit-progress-value {
+  background-color: #3498db; /* Blue color for the fill */
+}
+
+progress::-moz-progress-bar {
+  background-color: #3498db; /* Blue color for the fill in Firefox */
+}
+
+/* Style the text on the progress bar */
+progress::after {
+  content: attr(value '%'); /* Display the progress value followed by '%' */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white; /* Set text color */
+  font-size: 14px; /* Set font size */
+}
+
+/* Style other texts */
+.loader-container > span {
+  margin-left: 5px; /* Add spacing between the progress bar and the text */
+}
+
+.progress-bar > .generating {
+  display: none !important;
+}
+
+.progress-bar{
+  height: 30px !important;
+}
+
+.progress-bar span {
+    text-align: right;
+    width: 215px;
+}
+div:has(> #positive_prompt) {
+    border: none;
+}
+
+#positive_prompt {
+    padding: 1px;
+    background: var(--background-fill-primary);
+}
+
+.type_row {
+  height: 84px !important;
+}
+
+.type_row_half {
+  height: 34px !important;
+}
+
+.refresh_button {
+  border: none !important;
+  background: none !important;
+  font-size: none !important;
+  box-shadow: none !important;
+}
+
+.advanced_check_row {
+  width: 330px !important;
+}
+
+.min_check {
+  min-width: min(1px, 100%) !important;
+}
+
+.resizable_area {
+  resize: vertical;
+  overflow: auto !important;
+}
+
+.performance_selection label {
+    width: 140px !important;
+}
+
+.aspect_ratios label {
+    flex: calc(50% - 5px) !important;
+}
+
+.aspect_ratios label span {
+    white-space: nowrap !important;
+}
+
+.aspect_ratios label input {
+    margin-left: -5px !important;
+}
+
+.lora_enable label {
+  height: 100%;
+}
+
+.lora_enable label input {
+  margin: auto;
+}
+
+.lora_enable label span {
+  display: none;
+}
+
+@-moz-document url-prefix() {
+  .lora_weight input[type=number] {
+    width: 80px;
+  }
+}
+
+#context-menu{
+    z-index:9999;
+    position:absolute;
+    display:block;
+    padding:0px 0;
+    border:2px solid #a55000;
+    border-radius:8px;
+    box-shadow:1px 1px 2px #CE6400;
+    width: 200px;
+}
+
+.context-menu-items{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu-items a{
+    display:block;
+    padding:5px;
+    cursor:pointer;
+}
+
+.context-menu-items a:hover{
+    background: #a55000;
+}
+
+.canvas-tooltip-info {
+  position: absolute;
+  top: 28px;
+  left: 2px;
+  cursor: help;
+  background-color: rgba(0, 0, 0, 0.3);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  z-index: 100;
+}
+
+.canvas-tooltip-info::after {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 7px;
+  background-color: white;
+  margin-top: 2px;
+}
+
+.canvas-tooltip-info::before {
+  content: '';
+  display: block;
+  width: 2px;
+  height: 2px;
+  background-color: white;
+}
+
+.canvas-tooltip-content {
+  display: none;
+  background-color: #f9f9f9;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 15px;
+  position: absolute;
+  top: 40px;
+  left: 10px;
+  width: 250px;
+  font-size: 16px;
+  opacity: 0;
+  border-radius: 8px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+
+  z-index: 100;
+}
+
+.canvas-tooltip:hover .canvas-tooltip-content {
+  display: block;
+  animation: fadeIn 0.5s;
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+.styler {
+  overflow:inherit !important;
+}
+
+.gradio-container{
+  overflow: visible;
+}
+
+/* fullpage image viewer */
+
+#lightboxModal{
+    display: none;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(20, 20, 20, 0.95);
+    user-select: none;
+    -webkit-user-select: none;
+    flex-direction: column;
+}
+
+.modalControls {
+    display: flex;
+    position: absolute;
+    right: 0px;
+    left: 0px;
+    gap: 1em;
+    padding: 1em;
+    background-color:rgba(0,0,0,0);
+    z-index: 1;
+    transition: 0.2s ease background-color;
+}
+.modalControls:hover {
+    background-color:rgba(0,0,0,0.9);
+}
+.modalClose {
+    margin-left: auto;
+}
+.modalControls span{
+    color: white;
+    text-shadow: 0px 0px 0.25em black;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 1em;
+}
+
+.modalControls span:hover, .modalControls span:focus{
+    color: #999;
+    text-decoration: none;
+}
+
+#lightboxModal > img {
+    display: block;
+    margin: auto;
+    width: auto;
+}
+
+#lightboxModal > img.modalImageFullscreen{
+    object-fit: contain;
+    height: 100%;
+    width: 100%;
+    min-height: 0;
+}
+
+.modalPrev,
+.modalNext {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  padding: 16px;
+  margin-top: -50px;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.modalNext {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+.modalPrev:hover,
+.modalNext:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+#imageARPreview {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 2px solid red;
+    background: rgba(255, 0, 0, 0.3);
+    z-index: 900;
+    pointer-events: none;
+    display: none;
+}
+
+#stylePreviewOverlay {
+    opacity: 0;
+    pointer-events: none;
+    width: 128px;
+    height: 128px;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    border: solid 1px lightgrey;
+    transform: translate(-140px, 20px);
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    z-index: 100;
+    transition: transform 0.1s ease, opacity 0.3s ease;
+}
+
+#stylePreviewOverlay.lower-half {
+    transform: translate(-140px, -140px);
+}
+
+/* scrollable box for style selections */
+.contain .tabs {
+  height: 100%;
+}
+
+.contain .tabs .tabitem.style_selections_tab {
+  height: 100%;
+}
+
+.contain .tabs .tabitem.style_selections_tab > div:first-child {
+  height: 100%;
+}
+
+.contain .tabs .tabitem.style_selections_tab .style_selections {
+  min-height: 200px;
+  height: 100%;
+}
+
+.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] {
+  position: absolute; /* remove this to disable scrolling within the checkbox-group */
+  overflow: auto;
+  padding-right: 2px;
+  max-height: 100%;
+}
+
+.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label {
+  /* max-width: calc(35% - 15px) !important; */ /* add this to enable 3 columns layout */
+  flex: calc(50% - 5px) !important;
+}
+
+.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label span {
+  /* white-space:nowrap; */ /* add this to disable text wrapping (better choice for 3 columns layout) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* styles preview tooltip */
+.preview-tooltip {
+  background-color: #fff8;
+  font-family: monospace;
+  text-align: center;
+  border-radius: 5px 5px 0px 0px;
+  display: none; /* remove this to enable tooltip in preview image */
+}
+
+#inpaint_canvas .canvas-tooltip-info {
+  top: 2px;
+}
+
+#inpaint_brush_color input[type=color]{
+  background: none;
+}
+
+/* ==========================================================================
+   ComfyUI-Inspired Dark Studio Theme & Modern Polish
+   ========================================================================== */
+
+:root {
+  --comfy-bg-dark: #121316;
+  --comfy-panel: #1b1c23;
+  --comfy-panel-hover: #22242d;
+  --comfy-border: #2c2e3b;
+  --comfy-border-light: #383a4c;
+  --comfy-blue: #3b82f6;
+  --comfy-blue-hover: #2563eb;
+  --comfy-cyan: #06b6d4;
+  --comfy-emerald: #10b981;
+  --comfy-text: #f3f4f6;
+  --comfy-text-muted: #9ca3af;
+}
+
+body, gradio-app {
+  background-color: var(--comfy-bg-dark) !important;
+  color: var(--comfy-text) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #14151a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e303d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #45475a;
+}
+
+/* Prompt Box Comfy UI Styling */
+#positive_prompt textarea, #negative_prompt textarea {
+  background: #17181f !important;
+  border: 1px solid #2e303d !important;
+  border-radius: 8px !important;
+  color: #e5e7eb !important;
+  font-size: 14.5px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#positive_prompt textarea:focus, #negative_prompt textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* ==========================================================================
+   AETHER DIFFUSION STUDIO PRO - THEME & COMPONENT STYLES
+   ========================================================================== */
+
+/* Studio Action Buttons */
+#generate_button, .aether_btn_generate {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45) !important;
+  border-radius: 9px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  letter-spacing: 0.6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+#generate_button:hover, .aether_btn_generate:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #9333ea 50%, #22d3ee 100%) !important;
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.6) !important;
+  transform: translateY(-1px) scale(1.01);
+}
+
+.aether_action_subrow {
+  display: flex !important;
+  gap: 6px !important;
+  margin-bottom: 5px !important;
+}
+
+#pause_button, .aether_btn_pause {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border: 1px solid #fbbf24 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#pause_button:hover, .aether_btn_pause:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5) !important;
+}
+
+#skip_button, .aether_btn_skip {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+  border: 1px solid #475569 !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#skip_button:hover, .aether_btn_skip:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  color: #ffffff !important;
+}
+
+#stop_button, .aether_btn_stop {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+  border: 1px solid #f87171 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.4) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#stop_button:hover, .aether_btn_stop:hover {
+  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%) !important;
+  box-shadow: 0 5px 16px rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Prompt Box Modern Styling */
+#positive_prompt textarea {
+  border-radius: 9px !important;
+  border: 1px solid #272b3c !important;
+  background: #111420 !important;
+  color: #f1f5f9 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  transition: all 0.2s ease !important;
+}
+#positive_prompt textarea:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25) !important;
+}
+
+/* Smart RAM Checkbox Glow */
+.smart_ram_checkbox {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-top: 8px !important;
+}
+
+/* Studio Tabs Navigation */
+.tabs > .tab-nav {
+  border-bottom: 1px solid #232736 !important;
+  background: #0f121d !important;
+  border-radius: 10px 10px 0 0 !important;
+  padding: 5px !important;
+  gap: 5px !important;
+}
+
+.tabs > .tab-nav > button {
+  border-radius: 7px !important;
+  padding: 7px 15px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #94a3b8 !important;
+  border: none !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+}
+
+.tabs > .tab-nav > button:hover {
+  color: #f8fafc !important;
+  background: #1a1e2e !important;
+}
+
+.tabs > .tab-nav > button.selected {
+  color: #38bdf8 !important;
+  background: #172033 !important;
+  border-bottom: 2px solid #38bdf8 !important;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* Aether Studio Header Status Bar */
+.aether-header-bar {
+  margin-bottom: 12px !important;
+}
+
+.aether-header-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, #10131e 0%, #151826 100%);
+  border: 1px solid #232738;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.aether-brand-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aether-symbol {
+  font-size: 20px;
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.5));
+}
+
+.aether-studio-title {
+  font-weight: 800;
+  font-size: 16px;
+  color: #f1f5f9;
+  letter-spacing: 0.8px;
+}
+
+.aether-accent-text {
+  color: #38bdf8;
+}
+
+.aether-studio-version {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.aether-divider-pipe {
+  color: #334155;
+  font-size: 14px;
+}
+
+.aether-hw-badge {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  background: #181d2c;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #272d42;
+}
+
+.aether-hw-tag {
+  color: #38bdf8;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.aether-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 20px;
+}
+
+.aether-online-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.aether-status-badge-text {
+  color: #34d399;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+/* Quick Download Button */
+.comfy-quick-download-btn {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 1px solid #10b981 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+.comfy-quick-download-btn:hover {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+/* Guide and Template Cards */
+.guide-card {
+  background: #131724;
+  border: 1px solid #24293c;
+  border-radius: 9px;
+  padding: 13px 18px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.guide-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 3px 12px rgba(59, 130, 246, 0.15);
+}
+.guide-badge-3d {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+.guide-badge-anime {
+  background: rgba(236, 72, 153, 0.2);
+  color: #f472b6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(236, 72, 153, 0.4);
+}
+
+/* VRAM Mode Badges in Header */
+.aether-badge-eco {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(16, 185, 129, 0.45) !important;
+  color: #a7f3d0 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2) !important;
+}
+
+.aether-badge-speed {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #bae6fd !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* VRAM Mode Settings Group & Info Card */
+.vram_mode_group {
+  background: #121624 !important;
+  border: 1px solid #23293e !important;
+  border-radius: 10px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 14px !important;
+}
+
+.vram_mode_radio {
+  margin-bottom: 8px !important;
+}
+
+.vram_info_box {
+  background: #0f131f !important;
+  border: 1px solid #1f2538 !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  color: #cbd5e1 !important;
+}
+.vram_info_box h3 {
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+  font-size: 14.5px !important;
+}
+.vram_info_box ul {
+  padding-left: 18px !important;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+}
+.vram_info_box li {
+  margin-bottom: 3px !important;
+}
+
+/* Prompt Magier Button */
+.prompt_magier_btn {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(56, 189, 248, 0.25)) !important;
+  border: 1px solid rgba(168, 85, 247, 0.5) !important;
+  color: #f3e8ff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2) !important;
+}
+.prompt_magier_btn:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(56, 189, 248, 0.45)) !important;
+  border-color: #c084fc !important;
+  box-shadow: 0 0 18px rgba(192, 132, 252, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+/* Civitai Beta Downloader Styling */
+.civitai-beta-warning {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Vision AI Studio Styling */
+.vision-analyze-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+  border: 1px solid #818cf8 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
+  transition: all 0.25s ease !important;
+}
+.vision-analyze-btn:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #9333ea 100%) !important;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.55) !important;
+  transform: translateY(-1px);
+}
+
+/* Vision AI Beta Banner */
+.vision-beta-banner {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(59, 130, 246, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.vision-beta-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.vision-beta-badge {
+  background: rgba(139, 92, 246, 0.25);
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+}
+.vision-beta-title {
+  color: #e2e8f0;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.vision-beta-status {
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+}
+.vision-beta-text {
+  color: #94a3b8;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.vision-res-row {
+  align-items: center;
+  background: #111626;
+  border: 1px solid #1f2742;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+.vision-action-bar {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* Live Face Swap & Avatar Studio */
+.faceswap-beta-banner {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(139, 92, 246, 0.12) 100%);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.faceswap-beta-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+.faceswap-beta-title {
+  color: #f1f5f9;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.faceswap-beta-status {
+  color: #f472b6;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+}
+.faceswap-beta-text {
+  color: #94a3b8;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.faceswap-obs-box {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 16px;
+  color: #e2e8f0;
+}
+.faceswap-obs-box h4 {
+  margin: 0 0 8px 0;
+  color: #38bdf8;
+  font-size: 14px;
+  font-weight: 700;
+}
+.faceswap-obs-box ol {
+  margin: 6px 0 0 18px;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+.faceswap-model-row {
+  margin-bottom: 6px;
+  align-items: flex-end;
+}
